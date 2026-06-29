@@ -20,7 +20,7 @@
     "test": "bun test",
     "converter:restore": "powershell -ExecutionPolicy Bypass -File scripts/build-converter.ps1 -RestoreOnly",
     "converter:build": "powershell -ExecutionPolicy Bypass -File scripts/build-converter.ps1",
-    "package": "bun run build && node node_modules/electron-builder/cli.js --win --x64"
+    "package": "bun run build && node node_modules/electron-builder/cli.js --win --x64 --publish never"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
