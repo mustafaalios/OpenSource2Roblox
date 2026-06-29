@@ -1166,52 +1166,55 @@ namespace Source2Roblox.Geometry
 
             Console.WriteLine($"Assembling world...");
 
-            foreach (var prop in staticProps)
+            if (staticProps != null)
             {
-                int skin = prop.Skin;
-
-                if (!models.TryGetValue(prop.Name, out var skins))
-                    continue;
-
-                if (!skins.TryGetValue(skin, out var modelSource))
-                    continue;
-
-                var origin = prop.Position;
-                var angles = prop.Rotation;
-
-                var model = modelSource.Clone() as Model;
-                var cf = Entity.GetCFrame(origin, angles);
-                var scale = prop.Scale;
-
-                if (scale != 1f)
+                foreach (var prop in staticProps)
                 {
-                    foreach (var desc in model.GetDescendants())
+                    int skin = prop.Skin;
+
+                    if (!models.TryGetValue(prop.Name, out var skins))
+                        continue;
+
+                    if (!skins.TryGetValue(skin, out var modelSource))
+                        continue;
+
+                    var origin = prop.Position;
+                    var angles = prop.Rotation;
+
+                    var model = modelSource.Clone() as Model;
+                    var cf = Entity.GetCFrame(origin, angles);
+                    var scale = prop.Scale;
+
+                    if (scale != 1f)
                     {
-                        if (desc is BasePart part)
+                        foreach (var desc in model.GetDescendants())
                         {
-                            part.Size *= scale;
-                            part.CFrame = part.CFrame.Scale(scale);
-                            part.PivotOffset = part.PivotOffset.Scale(scale);
-                        }
-                        else if (desc is Attachment att)
-                        {
-                            att.CFrame = att.CFrame.Scale(scale);
-                        }
-                        else if (desc is JointInstance joint)
-                        {
-                            joint.C0 = joint.C0.Scale(scale);
-                            joint.C1 = joint.C1.Scale(scale);
+                            if (desc is BasePart part)
+                            {
+                                part.Size *= scale;
+                                part.CFrame = part.CFrame.Scale(scale);
+                                part.PivotOffset = part.PivotOffset.Scale(scale);
+                            }
+                            else if (desc is Attachment att)
+                            {
+                                att.CFrame = att.CFrame.Scale(scale);
+                            }
+                            else if (desc is JointInstance joint)
+                            {
+                                joint.C0 = joint.C0.Scale(scale);
+                                joint.C1 = joint.C1.Scale(scale);
+                            }
                         }
                     }
-                }
 
-                model.PivotTo(cf);
-                model.Parent = workspace;
+                    model.PivotTo(cf);
+                    model.Parent = workspace;
 
-                foreach (var part in model.GetDescendantsOfType<BasePart>())
-                {
-                    var position = part.CFrame.Position;
-                    partTree.CreateNode(position, part);
+                    foreach (var part in model.GetDescendantsOfType<BasePart>())
+                    {
+                        var position = part.CFrame.Position;
+                        partTree.CreateNode(position, part);
+                    }
                 }
             }
 

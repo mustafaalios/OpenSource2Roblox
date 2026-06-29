@@ -9,6 +9,13 @@ All notable changes to this project are documented here.
 - GitHub Actions can now find the MSBuild installation configured by the workflow.
 - Electron Builder no longer attempts its own CI publish before the release workflow uploads the installer.
 
+## [0.1.1] - 2026-06-29
+
+### Fixed
+
+- Map conversion no longer fails while assembling worlds without static props.
+- Rejected Roblox uploads now fall back to local assets without aborting the conversion.
+
 ## [0.1.0] - 2026-06-29
 
 ### Added

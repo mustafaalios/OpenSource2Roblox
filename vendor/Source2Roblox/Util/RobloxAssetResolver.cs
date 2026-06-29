@@ -65,7 +65,18 @@ namespace Source2Roblox.Util
                 return;
             }
 
-            string assetId = ResolveAsync(localPath, assetType, contentType).GetAwaiter().GetResult();
+            string assetId;
+
+            try
+            {
+                assetId = ResolveAsync(localPath, assetType, contentType).GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Program.Emit("raw", $"Roblox rejected {localPath}; using the local asset instead. {e.Message}");
+                SetProperty(target, property, LocalAsset(NormalizeLocalPath(localPath)));
+                return;
+            }
 
             if (string.IsNullOrEmpty(assetId))
                 return;
@@ -88,7 +99,18 @@ namespace Source2Roblox.Util
                 return;
             }
 
-            string assetId = ResolveAsync(localPath, assetType, contentType).GetAwaiter().GetResult();
+            string assetId;
+
+            try
+            {
+                assetId = ResolveAsync(localPath, assetType, contentType).GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Program.Emit("raw", $"Roblox rejected {localPath}; using the local asset instead. {e.Message}");
+                SetPropertyValue(targetProperty, LocalAsset(NormalizeLocalPath(localPath)));
+                return;
+            }
 
             if (string.IsNullOrEmpty(assetId))
                 return;
@@ -108,26 +130,17 @@ namespace Source2Roblox.Util
                 return Task.FromResult<string>(null);
             }
 
-            return UploadAsync(normalizedPath, filePath, assetType, contentType);
+            return UploadAsync(filePath, assetType, contentType);
         }
 
         private async Task<string> UploadAsync(
-            string localPath,
             string filePath,
             string assetType,
             string contentType
         )
         {
-            try
-            {
-                string assetId = await CreateAssetAsync(filePath, assetType, contentType).ConfigureAwait(false);
-                return "rbxassetid://" + assetId;
-            }
-            catch (Exception e)
-            {
-                Program.Emit("error", $"Upload failed for {localPath}: {e.Message}");
-                throw;
-            }
+            string assetId = await CreateAssetAsync(filePath, assetType, contentType).ConfigureAwait(false);
+            return "rbxassetid://" + assetId;
         }
 
         private async Task<string> CreateAssetAsync(string filePath, string assetType, string contentType)
