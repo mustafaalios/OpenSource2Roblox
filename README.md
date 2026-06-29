@@ -47,7 +47,7 @@ The installer is written to `release/`.
 
 ## AI Note
 
-A small amount of AI help was used for frontend polish and a bit of C# cleanup. It was not the whole project, so please do not throw stones at a man for using a screwdriver that talks back.
+A small amount of AI help was used for frontend polish and a bit of C# cleanup. It was not the whole project, so please do not throw stones at a man for using a little bit of codex.
 
 ## Releases
 

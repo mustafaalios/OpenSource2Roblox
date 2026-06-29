@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- GitHub Actions can now find the MSBuild installation configured by the workflow.
+
 ## [0.1.0] - 2026-06-29
 
 ### Added

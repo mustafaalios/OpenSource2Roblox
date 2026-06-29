@@ -8,10 +8,12 @@ $workspace = Split-Path -Parent $PSScriptRoot
 $solution = Join-Path $workspace "vendor\Source2Roblox\Source2Roblox.sln"
 $robloxFileFormatSolution = Join-Path $workspace "vendor\Roblox-File-Format\RobloxFileFormat.sln"
 $msbuildCandidates = @(
+  (Get-Command MSBuild.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1),
   "C:\Program Files\Microsoft Visual Studio\2022\Preview\MSBuild\Current\Bin\MSBuild.exe",
   "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
+  "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe",
   "C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Current\Bin\MSBuild.exe"
-)
+) | Where-Object { $_ }
 
 $msbuild = $msbuildCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 
