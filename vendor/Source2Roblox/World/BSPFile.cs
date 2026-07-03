@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
 using Source2Roblox.FileSystem;
 using Source2Roblox.World.Types;
+using Brush = Source2Roblox.World.Types.Brush;
 
 using RobloxFiles.DataTypes;
 using System.Linq;

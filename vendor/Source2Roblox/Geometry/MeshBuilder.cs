@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -222,8 +222,8 @@ namespace Source2Roblox.Geometry
                 .ToLowerInvariant();
 
             string localAppData = Environment.GetEnvironmentVariable("localappdata");
-            string defaultRoot = Path.Combine(localAppData, "Roblox Studio", "content", "source");
-            string rootWorkDir = Path.Combine(sourceRootDir ?? defaultRoot, gameName);
+            string studioContent = Util.StudioContentPath.Get();
+            string rootWorkDir = Path.Combine(studioContent, "source", gameName);
 
             string rbxAssetDir = $"rbxasset://source/{gameName}";
             var assetResolver = new RobloxAssetResolver(rootWorkDir, rbxAssetDir);
@@ -283,6 +283,7 @@ namespace Source2Roblox.Geometry
             var lastBodyPart = "";
             var meshBinds = new Dictionary<MeshPart, RobloxMeshFile>();
             var rootBone = model.Bones.First();
+            var modelMaterials = new List<ValveMaterial>();
 
             foreach (var meshBuffer in meshBuffers)
             {
@@ -374,6 +375,7 @@ namespace Source2Roblox.Geometry
                     matPath = "error.vmt";
 
                 var vmt = new ValveMaterial(matPath, game);
+                modelMaterials.Add(vmt);
                 bool noAlpha = vmt.NoAlpha;
                 
                 string diffusePath = vmt.DiffusePath;
@@ -557,6 +559,53 @@ namespace Source2Roblox.Geometry
             exportBlob.Save(exportPath);
             Console.WriteLine($"\tWrote {exportPath}");
 
+            if (sourceRootDir != null)
+            {
+                try
+                {
+                    string exportModelDir = Path.Combine(sourceRootDir, gameName, modelDir);
+                    string exportMeshDir = Path.Combine(sourceRootDir, gameName, meshDir);
+
+                    // Copy .rbxm model file
+                    Directory.CreateDirectory(exportModelDir);
+                    string destModelPath = Path.Combine(exportModelDir, $"{modelName}.rbxm");
+                    File.Copy(exportPath, destModelPath, true);
+
+                    // Copy meshes
+                    if (Directory.Exists(meshWorkDir))
+                    {
+                        CopyDirectory(meshWorkDir, exportMeshDir);
+                    }
+
+                    // Copy textures
+                    foreach (var vmt in modelMaterials)
+                    {
+                        if (vmt == null) continue;
+                        string[] paths = { vmt.DiffusePath, vmt.BumpPath, ENV_DARK, ENV_LIGHT };
+                        foreach (string p in paths)
+                        {
+                            if (string.IsNullOrEmpty(p)) continue;
+                            string relPng = p.Replace(".vtf", ".png");
+                            string srcPng = Path.Combine(rootWorkDir, relPng);
+                            string destPng = Path.Combine(sourceRootDir, gameName, relPng);
+
+                            if (File.Exists(srcPng))
+                            {
+                                string destFolder = Path.GetDirectoryName(destPng);
+                                if (!Directory.Exists(destFolder))
+                                    Directory.CreateDirectory(destFolder);
+
+                                File.Copy(srcPng, destPng, true);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error mirroring model files to export directory: {ex.Message}");
+                }
+            }
+
             return exportModel;
         }
 
@@ -641,20 +690,32 @@ namespace Source2Roblox.Geometry
         {
             string mapName = bsp.Name;
             string gameName = GameMount.GetGameName(game);
-            string localAppData = Environment.GetEnvironmentVariable("localappdata");
-            string defaultRoot = Path.Combine(localAppData, "Roblox Studio", "content", "source");
-            string sourceDir = Path.Combine(sourceRootDir ?? defaultRoot, gameName);
+
+            // Textures and meshes must live under the active Roblox Studio version's
+            // content folder so rbxasset://source/<game>/... URLs resolve correctly in Studio.
+            string studioContent = Util.StudioContentPath.Get();
+            string sourceDir = Path.Combine(studioContent, "source", gameName);
+
+            // The .rbxl place file is saved to the user-specified export directory
+            // (Documents\Roblox Studio\Source2Roblox Exports) or falls back to studioContent.
+            string exportRoot = sourceRootDir != null
+                ? Path.Combine(sourceRootDir, gameName)
+                : sourceDir;
 
             string rbxAsset = $"rbxasset://source/{gameName}";
             var assetResolver = new RobloxAssetResolver(sourceDir, rbxAsset);
             var uploadPool = new List<Task>();
             var geometry = new WorldGeometry(bsp, sourceDir, game);
 
-            string mapsDir = Path.Combine(sourceDir, "maps");
+            string mapsDir = Path.Combine(exportRoot, "maps");
             string mapDir = Path.Combine(mapsDir, bsp.Name);
+
+            // Mesh files live under Studio content so rbxasset:// resolves them.
+            string meshStudioDir = Path.Combine(sourceDir, "maps", bsp.Name);
 
             Console.WriteLine("Writing Roblox files...");
             Directory.CreateDirectory(mapDir);
+            Directory.CreateDirectory(meshStudioDir);
 
             var map = new BinaryRobloxFile();
 
@@ -809,7 +870,7 @@ namespace Source2Roblox.Geometry
                 else
                     meshName = $"cluster_{++clusterId}.mesh";
 
-                var meshPath = Path.Combine(mapDir, meshName);
+                var meshPath = Path.Combine(meshStudioDir, meshName);
                 var meshFile = new RobloxMeshFile();
 
                 var mesh = new RobloxMesh();
@@ -1427,10 +1488,82 @@ namespace Source2Roblox.Geometry
             string savePath = Path.Combine(mapsDir, bsp.Name + ".rbxl");
             map.Save(savePath);
 
+            if (sourceRootDir != null)
+            {
+                try
+                {
+                    // Copy meshes
+                    string exportMapDir = Path.Combine(mapsDir, bsp.Name);
+                    CopyDirectory(meshStudioDir, exportMapDir);
+
+                    // Copy textures
+                    foreach (var pair in geometry.Materials)
+                    {
+                        var vmt = pair.Value;
+                        if (vmt == null) continue;
+
+                        string[] paths = { vmt.DiffusePath, vmt.BumpPath };
+                        foreach (string p in paths)
+                        {
+                            if (string.IsNullOrEmpty(p)) continue;
+                            string relPng = p.Replace(".vtf", ".png");
+                            string srcPng = Path.Combine(sourceDir, relPng);
+                            string destPng = Path.Combine(exportRoot, relPng);
+
+                            if (File.Exists(srcPng))
+                            {
+                                string? destFolder = Path.GetDirectoryName(destPng);
+                                if (!string.IsNullOrEmpty(destFolder))
+                                {
+                                    if (!Directory.Exists(destFolder))
+                                        Directory.CreateDirectory(destFolder);
+
+                                    File.Copy(srcPng, destPng, true);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error mirroring files to export directory: {ex.Message}");
+                }
+            }
+
+            Program.Emit("output", $"Map exported to: {savePath}", new { path = mapsDir });
+
             if (openWhenDone)
                 Process.Start(savePath);
 
             return geometry;
+        }
+
+        private static void CopyDirectory(string sourceDir, string destDir)
+        {
+            if (!Directory.Exists(sourceDir))
+                return;
+
+            Directory.CreateDirectory(destDir);
+
+            // Copy files
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string name = Path.GetFileName(file);
+                string dest = Path.Combine(destDir, name);
+                try
+                {
+                    File.Copy(file, dest, true);
+                }
+                catch {}
+            }
+
+            // Copy subdirectories
+            foreach (string subDir in Directory.GetDirectories(sourceDir))
+            {
+                string name = Path.GetFileName(subDir);
+                string dest = Path.Combine(destDir, name);
+                CopyDirectory(subDir, dest);
+            }
         }
     }
 }

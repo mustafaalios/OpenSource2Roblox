@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -17,6 +17,15 @@ namespace Source2Roblox.Textures
         private static readonly KVSerializer vmtHelper = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
         private static readonly Dictionary<string, Image> handledFiles = new Dictionary<string, Image>();
         private readonly GameMount Game;
+
+        /// <summary>Clears the texture cache between conversion runs.</summary>
+        public static void ClearCache()
+        {
+            lock (handledFiles)
+            {
+                handledFiles.Clear();
+            }
+        }
 
         public string[] DiffusePaths = new string[2];
         public int DiffuseIndex = 0;
@@ -53,10 +62,21 @@ namespace Source2Roblox.Textures
                 .Combine(rootDir, fileName)
                 .Replace(".vtf", ".png");
 
-            if (handledFiles.ContainsKey(filePath))
-                return handledFiles[filePath];
+            lock (handledFiles)
+            {
+                if (handledFiles.ContainsKey(filePath))
+                    return handledFiles[filePath];
+            }
 
-            if (!handledFiles.TryGetValue(path, out Image bitmap))
+            Image bitmap = null;
+            bool foundInCache = false;
+
+            lock (handledFiles)
+            {
+                foundInCache = handledFiles.TryGetValue(path, out bitmap);
+            }
+
+            if (!foundInCache)
             {
                 if (File.Exists(filePath))
                 {
@@ -71,7 +91,14 @@ namespace Source2Roblox.Textures
                     if (canPreload)
                     {
                         var preload = Image.FromFile(filePath);
-                        handledFiles.Add(filePath, preload);
+                        lock (handledFiles)
+                        {
+                            if (!handledFiles.ContainsKey(filePath))
+                                handledFiles.Add(filePath, preload);
+
+                            if (!handledFiles.ContainsKey(path))
+                                handledFiles.Add(path, preload);
+                        }
 
                         Console.WriteLine($"\tPreloaded {path}");
                         return preload;
@@ -105,12 +132,23 @@ namespace Source2Roblox.Textures
                         }
                     }
 
-                    handledFiles.Add(path, bitmap);
+                    lock (handledFiles)
+                    {
+                        if (!handledFiles.ContainsKey(path))
+                            handledFiles.Add(path, bitmap);
+                    }
                 }
             }
 
-            bitmap.Save(filePath);
-            handledFiles[filePath] = bitmap;
+            lock (handledFiles)
+            {
+                if (!File.Exists(filePath))
+                {
+                    bitmap.Save(filePath);
+                }
+
+                handledFiles[filePath] = bitmap;
+            }
 
             Console.WriteLine($"\tWrote {filePath}");
             return bitmap;

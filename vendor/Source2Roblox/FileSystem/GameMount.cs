@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -131,38 +131,66 @@ namespace Source2Roblox.FileSystem
             game.BindZipArchive(name, archive);
         }
 
+        private readonly object routingLock = new object();
+
         private string GetRouting(string path)
         {
             path = Program.CleanPath(path);
 
-            if (Routing.TryGetValue(path, out string route))
+            lock (routingLock)
+            {
+                if (Routing.TryGetValue(path, out string route))
+                    return route;
+
+                if (!string.IsNullOrWhiteSpace(Program.CustomTexturesDir))
+                {
+                    string customPath = Path.Combine(Program.CustomTexturesDir, path);
+                    if (File.Exists(customPath))
+                    {
+                        route = customPath;
+                        Routing[path] = route;
+                        return route;
+                    }
+
+                    if (path.StartsWith("materials/"))
+                    {
+                        string trimmed = path.Substring("materials/".Length);
+                        string customPath2 = Path.Combine(Program.CustomTexturesDir, trimmed);
+                        if (File.Exists(customPath2))
+                        {
+                            route = customPath2;
+                            Routing[path] = route;
+                            return route;
+                        }
+                    }
+                }
+
+                foreach (string name in Mounts.Keys)
+                {
+                    VPKFile vpk = Mounts[name];
+
+                    if (vpk.HasFile(path))
+                    {
+                        route = name;
+                        break;
+                    }
+                }
+
+                Routing[path] = route;
+
+                if (route == null)
+                {
+                    string fullPath = Path.Combine(GameDir, path);
+
+                    if (File.Exists(fullPath))
+                    {
+                        route = fullPath;
+                        Routing[path] = route;
+                    }
+                }
+                
                 return route;
-
-            foreach (string name in Mounts.Keys)
-            {
-                VPKFile vpk = Mounts[name];
-
-                if (vpk.HasFile(path))
-                {
-                    route = name;
-                    break;
-                }
             }
-
-            Routing[path] = route;
-
-            if (route == null)
-            {
-                string fullPath = Path.Combine(GameDir, path);
-
-                if (File.Exists(fullPath))
-                {
-                    route = fullPath;
-                    Routing[path] = route;
-                }
-            }
-            
-            return route;
         }
 
         public bool HasFile(string path)

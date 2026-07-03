@@ -139,8 +139,18 @@ namespace Source2Roblox.Util
             string contentType
         )
         {
+            string cachedId = AssetUploadCache.GetCachedAssetId(filePath, assetType, Program.RobloxCreatorType, Program.RobloxCreatorId);
+            if (!string.IsNullOrEmpty(cachedId))
+            {
+                Program.Emit("raw", $"Using cached asset ID for {Path.GetFileName(filePath)}: {cachedId}");
+                return cachedId;
+            }
+
             string assetId = await CreateAssetAsync(filePath, assetType, contentType).ConfigureAwait(false);
-            return "rbxassetid://" + assetId;
+            string formattedAssetId = "rbxassetid://" + assetId;
+
+            AssetUploadCache.SetCachedAssetId(filePath, assetType, Program.RobloxCreatorType, Program.RobloxCreatorId, formattedAssetId);
+            return formattedAssetId;
         }
 
         private async Task<string> CreateAssetAsync(string filePath, string assetType, string contentType)
