@@ -137,7 +137,7 @@ Textures are automatically extracted and placed in Roblox Studio's content direc
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                             <ui:HyperlinkButton Name="RepoLinkButton"
                                                 Content="Source Repository"
-                                                NavigateUri="https://github.com/your-repo-here"
+                                                NavigateUri="https://github.com/mustafaalios/OpenSource2Roblox"
                                                 Icon="BranchFork24" />
                         </StackPanel>
                         <Separator Margin="0,0,0,14" Opacity="0.3" />
