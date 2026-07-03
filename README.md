@@ -26,16 +26,20 @@ The following games have been tested and proven to convert perfectly:
    Open your terminal (Command Prompt, PowerShell, or Git Bash) and run the following commands to clone the repository and navigate into the project folder:
    ```bash
    git clone https://github.com/mustafaalios/OpenSource2Roblox.git
+   ```
 
 2. **Move into the Repository:**
    ```bash
    cd OpenSource2Roblox
+   ```
 
 3. **Build in release mode:**
   ```bash
    dotnet build vendor/Source2Roblox/Source2Roblox.csproj --configuration Release
+  ```
 
-4. **Publish as executable:**
+4. **Publish as executable**
   ```bash
    dotnet publish vendor/Source2Roblox/Source2Roblox.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output release
+  ```
    
