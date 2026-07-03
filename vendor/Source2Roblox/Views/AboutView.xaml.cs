@@ -10,13 +10,12 @@ namespace Source2Roblox.Views
 
         private static readonly PersonEntry[] Maintainers =
         {
-            new PersonEntry("YourName",       "Lead Developer",   "https://github.com/YourName"),
+            new PersonEntry("mustafaalios",       "Lead Developer",   "https://github.com/mustafaalios"),
         };
 
         private static readonly PersonEntry[] Contributors =
         {
-            new PersonEntry("Contributor1",   "BSP Geometry",     "https://github.com/Contributor1"),
-            new PersonEntry("Contributor2",   "Texture Pipeline", "https://github.com/Contributor2"),
+            new PersonEntry("SenorLawyer",   "Original conversion base (non active contributer)",     "https://github.com/SenorLawyer"),
         };
 
         private static readonly PersonEntry[] Libraries = Array.Empty<PersonEntry>();
