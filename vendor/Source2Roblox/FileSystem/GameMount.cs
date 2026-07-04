@@ -86,6 +86,20 @@ namespace Source2Roblox.FileSystem
                 }
             }
 
+            // Dynamically mount all VPKs in the sourceengine folder if present
+            string sourceEngineDir = Path.Combine(rootDir.FullName, "sourceengine");
+            if (Directory.Exists(sourceEngineDir))
+            {
+                foreach (var file in Directory.GetFiles(sourceEngineDir, "*_dir.vpk"))
+                {
+                    string cleanedFile = file.Replace('\\', '/');
+                    if (!vpkPaths.Contains(cleanedFile))
+                    {
+                        vpkPaths.Add(cleanedFile);
+                    }
+                }
+            }
+
             foreach (string path in vpkPaths)
             {
                 string localPath = path

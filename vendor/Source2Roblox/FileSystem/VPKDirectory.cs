@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +8,7 @@ namespace Source2Roblox.FileSystem
 {
     public class VPKDirectory : IEnumerable<VPKEntry>
     {
-        private readonly Dictionary<string, VPKEntry> Entries = new Dictionary<string, VPKEntry>();
+        private readonly Dictionary<string, VPKEntry> Entries = new Dictionary<string, VPKEntry>(System.StringComparer.OrdinalIgnoreCase);
         public readonly ZipArchive ZipArchive;
 
         public readonly uint Version;
@@ -42,7 +42,19 @@ namespace Source2Roblox.FileSystem
         {
             if (!Entries.TryGetValue(path, out VPKEntry entry))
             {
-                ZipArchiveEntry zipEntry = ZipArchive?.GetEntry(path);
+                ZipArchiveEntry zipEntry = null;
+
+                if (ZipArchive != null)
+                {
+                    zipEntry = ZipArchive.GetEntry(path);
+                    if (zipEntry == null)
+                    {
+                        string searchPath = path.Replace('\\', '/');
+                        zipEntry = ZipArchive.Entries.FirstOrDefault(e => 
+                            e.FullName.Replace('\\', '/').Equals(searchPath, System.StringComparison.OrdinalIgnoreCase)
+                        );
+                    }
+                }
 
                 if (zipEntry != null)
                 {
