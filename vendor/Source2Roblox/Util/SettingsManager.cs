@@ -29,14 +29,13 @@ namespace Source2Roblox.Util
 
         public static AppSettings Load()
         {
+            AppSettings settings = null;
             try
             {
                 if (File.Exists(SettingsPath))
                 {
                     string json = File.ReadAllText(SettingsPath);
-                    var settings = JsonConvert.DeserializeObject<AppSettings>(json);
-                    if (settings != null)
-                        return settings;
+                    settings = JsonConvert.DeserializeObject<AppSettings>(json);
                 }
             }
             catch (Exception ex)
@@ -44,7 +43,55 @@ namespace Source2Roblox.Util
                 Console.WriteLine($"Error loading settings: {ex.Message}");
             }
 
-            return new AppSettings();
+            if (settings == null)
+            {
+                settings = new AppSettings();
+            }
+
+            // Migration from old Electron app settings
+            if (string.IsNullOrEmpty(settings.RobloxApiKey))
+            {
+                try
+                {
+                    string oldPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "source2roblox-revamp",
+                        "settings.json"
+                    );
+
+                    if (File.Exists(oldPath))
+                    {
+                        string oldJson = File.ReadAllText(oldPath);
+                        var oldData = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(oldJson);
+                        var oldSettings = oldData?["settings"];
+                        if (oldSettings != null)
+                        {
+                            settings.RobloxApiKey = oldSettings.Value<string>("robloxApiKey") ?? string.Empty;
+                            settings.RobloxCreatorId = oldSettings.Value<string>("robloxCreatorId") ?? string.Empty;
+                            settings.RobloxCreatorType = oldSettings.Value<string>("robloxCreatorType") ?? "User";
+                            
+                            // Capitalize CreatorType to match "User" / "Group"
+                            if (!string.IsNullOrEmpty(settings.RobloxCreatorType))
+                            {
+                                settings.RobloxCreatorType = char.ToUpper(settings.RobloxCreatorType[0]) + settings.RobloxCreatorType.Substring(1).ToLowerInvariant();
+                            }
+
+                            settings.UploadAssets = oldSettings.Value<bool?>("uploadAssets") ?? false;
+                            settings.UploadMeshes = oldSettings.Value<bool?>("uploadMeshes") ?? false;
+                            settings.CustomTexturesDir = oldSettings.Value<string>("customTexturesDir") ?? string.Empty;
+
+                            // Save migrated settings back so they persist
+                            Save(settings);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error migrating settings: {ex.Message}");
+                }
+            }
+
+            return settings;
         }
 
         public static void Save(AppSettings settings)
