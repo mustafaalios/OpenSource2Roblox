@@ -131,6 +131,14 @@ namespace Source2Roblox.World
             int length = lump.Length;
             int offset = lump.Offset;
 
+            if (lump.Type == LumpType.PakFile)
+            {
+                var buffer = ReadBuffer(bspReader, offset, length);
+                var archive = new ZipArchive(buffer);
+                GameMount.BindZipArchive(Name, archive, Game);
+                return;
+            }
+
             using (var buffer = ReadBuffer(bspReader, offset, length))
             using (var reader = new BinaryReader(buffer))
             {
@@ -225,8 +233,6 @@ namespace Source2Roblox.World
                     }
                     case LumpType.PakFile:
                     {
-                        var pakFile = new PakFile(reader);
-                        //GameMount.BindZipArchive(Name, archive, Game);
                         break;
                     }
                     case LumpType.TexDataStringData:

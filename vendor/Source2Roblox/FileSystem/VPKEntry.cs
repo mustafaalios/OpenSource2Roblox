@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.IO.Compression;
 
 namespace Source2Roblox.FileSystem
@@ -48,7 +48,6 @@ namespace Source2Roblox.FileSystem
                 using (var stream = ZipEntry.Open())
                 using (var reader = new BinaryReader(stream))
                 {
-                    reader.Skip(2);
                     PreloadContent = reader.ReadBytes(PreloadBytes);
                     return PreloadContent;
                 }

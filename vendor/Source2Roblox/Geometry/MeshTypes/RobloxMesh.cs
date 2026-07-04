@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,7 +29,7 @@ namespace Source2Roblox.Geometry
         public Vector2 UV = new Vector2();
         public Tangent Tangent = new Tangent(0, 0, -1, 1);
 
-        public Color Color;
+        public Color Color = Color.White;
         public byte NumBones;
 
         public Dictionary<Bone, byte> Bones = new Dictionary<Bone, byte>();

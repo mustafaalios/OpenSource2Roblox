@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -169,6 +169,28 @@ namespace RobloxFiles
             }
         }
 
+        private static string GetFieldNameForProperty(string propName)
+        {
+            switch (propName)
+            {
+                case "ColorMap": return "ColorMapContent";
+                case "NormalMap": return "NormalMapContent";
+                case "RoughnessMap": return "RoughnessMapContent";
+                case "MetalnessMap": return "MetalnessMapContent";
+                case "EmissiveMask": return "EmissiveMaskContent";
+                case "MoonTextureId": return "MoonTextureContent";
+                case "SunTextureId": return "SunTextureContent";
+                case "SkyboxBk": return "SkyboxBackContent";
+                case "SkyboxDn": return "SkyboxDownContent";
+                case "SkyboxFt": return "SkyboxFrontContent";
+                case "SkyboxLf": return "SkyboxLeftContent";
+                case "SkyboxRt": return "SkyboxRightContent";
+                case "SkyboxUp": return "SkyboxUpContent";
+                default:
+                    return propName;
+            }
+        }
+
         private string ImplicitName
         {
             get
@@ -190,6 +212,12 @@ namespace RobloxFiles
                             var implicitName = Name + '_';
                             return implicitName;
                         }
+                    }
+
+                    string mappedFieldName = GetFieldNameForProperty(Name);
+                    if (mappedFieldName != Name && instType.GetField(mappedFieldName, BindingFlags) != null)
+                    {
+                        return mappedFieldName;
                     }
                 }
 
@@ -220,6 +248,14 @@ namespace RobloxFiles
                         {
                             object value = member.GetValue(Object);
                             RawValue = value;
+
+                            if (RawValue is Content contentValue && IsLegacyContentProperty(Name))
+                            {
+                                if (contentValue.SourceType == RobloxFiles.Enums.ContentSourceType.Uri)
+                                    RawValue = new ContentId(contentValue.Uri);
+                                else
+                                    RawValue = new ContentId("");
+                            }
                         }
                         else
                         {
@@ -263,6 +299,15 @@ namespace RobloxFiles
                             {
                                 MethodInfo implicitCast = memberType.GetMethod("op_Implicit", new Type[] { valueType });
 
+                                if (implicitCast == null)
+                                {
+                                    implicitCast = valueType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                                        .Where(m => m.Name == "op_Implicit")
+                                        .Where(m => m.ReturnType == memberType)
+                                        .Where(m => m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == valueType)
+                                        .FirstOrDefault();
+                                }
+
                                 if (implicitCast != null)
                                 {
                                     try
@@ -297,6 +342,34 @@ namespace RobloxFiles
                     ImproviseRawBuffer();
 
                 return (RawBuffer != null);
+            }
+        }
+
+        public static bool IsLegacyContentProperty(string name)
+        {
+            switch (name)
+            {
+                case "TextureId":
+                case "TextureID":
+                case "Texture":
+                case "MeshId":
+                case "MeshID":
+                case "SkyboxBk":
+                case "SkyboxDn":
+                case "SkyboxFt":
+                case "SkyboxLf":
+                case "SkyboxRt":
+                case "SkyboxUp":
+                case "MoonTextureId":
+                case "SunTextureId":
+                case "ColorMap":
+                case "NormalMap":
+                case "RoughnessMap":
+                case "MetalnessMap":
+                case "EmissiveMask":
+                    return true;
+                default:
+                    return false;
             }
         }
 

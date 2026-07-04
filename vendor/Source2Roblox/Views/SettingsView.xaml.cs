@@ -144,17 +144,39 @@ namespace Source2Roblox.Views
 
         private void ClearCacheButton_Click(object sender, RoutedEventArgs e)
         {
-            string cachePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "OpenSource2Roblox",
-                "upload_cache.json"
-            );
-
             try
             {
-                if (File.Exists(cachePath))
+                // Clear in-memory cache to prevent writing it back on exit
+                AssetUploadCache.ClearCache();
+
+                string cachePathNew = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "OpenSource2Roblox",
+                    "upload_cache.json"
+                );
+
+                string cachePathOld = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Source2Roblox",
+                    "upload_cache.json"
+                );
+
+                bool deletedAny = false;
+
+                if (File.Exists(cachePathNew))
                 {
-                    File.Delete(cachePath);
+                    File.Delete(cachePathNew);
+                    deletedAny = true;
+                }
+
+                if (File.Exists(cachePathOld))
+                {
+                    File.Delete(cachePathOld);
+                    deletedAny = true;
+                }
+
+                if (deletedAny)
+                {
                     FeedbackText.Text = LanguageManager.Get("Feedback_CacheCleared");
                 }
                 else

@@ -13,7 +13,7 @@ using Source2Roblox.World;
 
 namespace Source2Roblox
 {
-    class Program
+    public class Program
     {
         private static readonly Dictionary<string, string> argMap = new Dictionary<string, string>();
         public static GameMount GameMount { get; private set; }

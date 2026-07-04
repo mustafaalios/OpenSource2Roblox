@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -114,6 +114,29 @@ namespace RobloxFiles
                     continue;
                 else if (fieldName == "Bevel_Roundness")
                     fieldName = "Bevel Roundness";
+                else if (fieldName.EndsWith("Content"))
+                {
+                    switch (fieldName)
+                    {
+                        case "ColorMapContent": fieldName = "ColorMap"; break;
+                        case "NormalMapContent": fieldName = "NormalMap"; break;
+                        case "RoughnessMapContent": fieldName = "RoughnessMap"; break;
+                        case "MetalnessMapContent": fieldName = "MetalnessMap"; break;
+                        case "EmissiveMaskContent": fieldName = "EmissiveMask"; break;
+                        case "MoonTextureContent": fieldName = "MoonTextureId"; break;
+                        case "SunTextureContent": fieldName = "SunTextureId"; break;
+                        case "SkyboxBackContent": fieldName = "SkyboxBk"; break;
+                        case "SkyboxDownContent": fieldName = "SkyboxDn"; break;
+                        case "SkyboxFrontContent": fieldName = "SkyboxFt"; break;
+                        case "SkyboxLeftContent": fieldName = "SkyboxLf"; break;
+                        case "SkyboxRightContent": fieldName = "SkyboxRt"; break;
+                        case "SkyboxUpContent": fieldName = "SkyboxUp"; break;
+                        case "MeshContent": fieldName = "MeshId"; break;
+                        case "TextureContent": fieldName = "TextureId"; break;
+                        default:
+                            break;
+                    }
+                }
 
                 PropertyType propType = PropertyType.Unknown;
                 var flagAttribute = Attribute.GetCustomAttribute(fieldType, typeof(FlagsAttribute));
@@ -132,7 +155,12 @@ namespace RobloxFiles
 
                     string xmlToken = fieldType.Name;
 
-                    if (fieldType.IsEnum && flagAttribute == null)
+                    if (fieldType == typeof(DataTypes.Content) && Property.IsLegacyContentProperty(fieldName))
+                    {
+                        propType = PropertyType.String;
+                        xmlToken = "ContentId";
+                    }
+                    else if (fieldType.IsEnum && flagAttribute == null)
                         xmlToken = "token";
                     else if (propType == PropertyType.Ref)
                         xmlToken = "Ref";

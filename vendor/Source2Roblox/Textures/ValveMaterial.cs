@@ -396,7 +396,7 @@ namespace Source2Roblox.Textures
             }   
         }
 
-        public ValveMaterial(string path, GameMount game = null)
+        private void ParseVMT(string path)
         {
             path = Program.CleanPath(path);
 
@@ -406,15 +406,13 @@ namespace Source2Roblox.Textures
             if (!path.EndsWith(".vmt"))
                 path += ".vmt";
 
-            Game = game;
-
-            if (!GameMount.HasFile(path, game))
+            if (!GameMount.HasFile(path, Game))
             {
                 Console.WriteLine($"Failed to bind ValveMaterial for: {path}");
                 return;
             }
 
-            using (var stream = GameMount.OpenRead(path, game))
+            using (var stream = GameMount.OpenRead(path, Game))
             {
                 while (true)
                 {
@@ -455,15 +453,58 @@ namespace Source2Roblox.Textures
                 using (var memStream = new MemoryStream(buffer))
                 {
                     var vmt = vmtHelper.Deserialize(memStream);
-                    Shader = vmt.Name;
+                    string shaderName = vmt.Name.ToLowerInvariant();
 
-                    if (Shader == "lightmappedgeneric")
+                    if (Shader == null)
+                        Shader = shaderName;
+
+                    if (shaderName == "lightmappedgeneric")
                         NoAlpha = true;
 
                     var keys = vmt.ToList();
-                    keys.ForEach(ReadEntry);
+
+                    if (shaderName == "patch")
+                    {
+                        var includeEntry = keys.FirstOrDefault(k => k.Name.ToLowerInvariant() == "include");
+                        if (includeEntry != null)
+                        {
+                            string includePath = includeEntry.Value.ToString();
+                            ParseVMT(includePath);
+                        }
+
+                        var insertEntry = keys.FirstOrDefault(k => k.Name.ToLowerInvariant() == "insert");
+                        if (insertEntry != null)
+                        {
+                            foreach (var child in insertEntry.Children)
+                                ReadEntry(child);
+                        }
+
+                        var replaceEntry = keys.FirstOrDefault(k => k.Name.ToLowerInvariant() == "replace");
+                        if (replaceEntry != null)
+                        {
+                            foreach (var child in replaceEntry.Children)
+                                ReadEntry(child);
+                        }
+
+                        foreach (var key in keys)
+                        {
+                            string kName = key.Name.ToLowerInvariant();
+                            if (kName != "include" && kName != "insert" && kName != "replace")
+                                ReadEntry(key);
+                        }
+                    }
+                    else
+                    {
+                        keys.ForEach(ReadEntry);
+                    }
                 }
             }
+        }
+
+        public ValveMaterial(string path, GameMount game = null)
+        {
+            Game = game;
+            ParseVMT(path);
         }
     }
 
