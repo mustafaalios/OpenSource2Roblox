@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Appearance;
@@ -15,6 +17,7 @@ namespace Source2Roblox
         private SettingsView settingsView;
         private AboutView aboutView;
         private HistoryView historyView;
+        private Dictionary<string, Page> pageMap;
 
         public MainWindow()
         {
@@ -27,6 +30,14 @@ namespace Source2Roblox
             settingsView = new SettingsView();
             aboutView = new AboutView();
             historyView = new HistoryView();
+
+            pageMap = new Dictionary<string, Page>
+            {
+                ["home"]     = homeView,
+                ["settings"] = settingsView,
+                ["history"]  = historyView,
+                ["about"]    = aboutView,
+            };
 
             LanguageManager.SetCulture(settings.LanguageOverride);
 
@@ -54,42 +65,48 @@ namespace Source2Roblox
         private void NavItem_Click(object sender, RoutedEventArgs e)
         {
             if (sender is NavigationViewItem item)
-            {
-                string tag = item.Tag as string ?? string.Empty;
-
-                if (tag == "home")
-                {
-                    RootFrame.Navigate(homeView);
-                }
-                else if (tag == "settings")
-                {
-                    RootFrame.Navigate(settingsView);
-                }
-                else if (tag == "history")
-                {
-                    historyView.Refresh();
-                    RootFrame.Navigate(historyView);
-                }
-                else if (tag == "about")
-                {
-                    RootFrame.Navigate(aboutView);
-                }
-            }
+                NavigateTo(item.Tag as string ?? string.Empty);
         }
 
         public void ApplyVisualSettings(AppSettings settings)
         {
+            WindowBackdropType bdt = WindowBackdropType.Mica;
+
+            if (!WindowBackdrop.IsSupported(bdt))
+            {
+                bdt = WindowBackdrop.IsSupported(WindowBackdropType.Acrylic) ? WindowBackdropType.Acrylic : WindowBackdropType.None;
+            }
+
+            this.WindowBackdropType = bdt;
+
             if (settings.Theme == "Light")
-                ApplicationThemeManager.Apply(ApplicationTheme.Light);
+                ApplicationThemeManager.Apply(ApplicationTheme.Light, bdt);
             else if (settings.Theme == "Dark")
-                ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+                ApplicationThemeManager.Apply(ApplicationTheme.Dark, bdt);
             else
                 ApplicationThemeManager.ApplySystemTheme();
 
-            WindowBackdropType bdt = WindowBackdropType.Mica;
+            if (settings.Theme == "System")
+            {
+                SystemThemeWatcher.Watch(this, bdt);
+            }
+            else
+            {
+                if (IsLoaded)
+                {
+                    try { SystemThemeWatcher.UnWatch(this); } catch { }
+                }
+            }
 
-            SystemThemeWatcher.Watch(this, bdt);
-            WindowBackdrop.ApplyBackdrop(this, bdt);
+            if (bdt == WindowBackdropType.None)
+            {
+                SetResourceReference(BackgroundProperty, "ApplicationBackgroundBrush");
+            }
+            else
+            {
+                Background = System.Windows.Media.Brushes.Transparent;
+                WindowBackdrop.ApplyBackdrop(this, bdt);
+            }
 
             var appTheme = settings.Theme;
             if (appTheme == "System")
@@ -159,23 +176,11 @@ namespace Source2Roblox
 
         public void NavigateTo(string tag)
         {
-            if (tag == "home")
-            {
-                RootFrame.Navigate(homeView);
-            }
-            else if (tag == "history")
-            {
+            if (tag == "history")
                 historyView.Refresh();
-                RootFrame.Navigate(historyView);
-            }
-            else if (tag == "settings")
-            {
-                RootFrame.Navigate(settingsView);
-            }
-            else if (tag == "about")
-            {
-                RootFrame.Navigate(aboutView);
-            }
+
+            if (pageMap.TryGetValue(tag, out var page))
+                RootFrame.Navigate(page);
         }
     }
 }
