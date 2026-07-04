@@ -132,7 +132,7 @@ namespace RobloxFiles
                         case "SkyboxRightContent": fieldName = "SkyboxRt"; break;
                         case "SkyboxUpContent": fieldName = "SkyboxUp"; break;
                         case "MeshContent": fieldName = "MeshId"; break;
-                        case "TextureContent": fieldName = "TextureId"; break;
+                        case "TextureContent": fieldName = "TextureID"; break;
                         default:
                             break;
                     }

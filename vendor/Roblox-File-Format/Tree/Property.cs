@@ -186,6 +186,10 @@ namespace RobloxFiles
                 case "SkyboxLf": return "SkyboxLeftContent";
                 case "SkyboxRt": return "SkyboxRightContent";
                 case "SkyboxUp": return "SkyboxUpContent";
+                case "MeshId": return "MeshContent";
+                case "MeshID": return "MeshContent";
+                case "TextureId": return "TextureContent";
+                case "TextureID": return "TextureContent";
                 default:
                     return propName;
             }

@@ -1,4 +1,4 @@
-﻿using RobloxFiles.Enums;
+using RobloxFiles.Enums;
 using System;
 
 namespace RobloxFiles.DataTypes
@@ -21,6 +21,14 @@ namespace RobloxFiles.DataTypes
         {
             Uri = uri;
             SourceType = ContentSourceType.Uri;
+        }
+
+        public static implicit operator Content(string uri)
+        {
+            if (string.IsNullOrEmpty(uri))
+                return None;
+
+            return new Content(uri);
         }
 
         public Content(RbxObject obj)
