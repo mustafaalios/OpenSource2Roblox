@@ -59,9 +59,23 @@ namespace Source2Roblox.Util
             string property
         )
         {
-            if (!Program.UploadAssets || !Program.HasRobloxUploadCredentials)
+            string normPath = NormalizeLocalPath(localPath);
+            bool isExcluded = false;
+            foreach (var excluded in Program.ExcludedTextures)
             {
-                SetProperty(target, property, LocalAsset(NormalizeLocalPath(localPath)));
+                if (normPath.IndexOf(excluded, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isExcluded = true;
+                    break;
+                }
+            }
+
+            if (isExcluded || !Program.UploadAssets || !Program.HasRobloxUploadCredentials)
+            {
+                if (isExcluded)
+                    Program.Emit("raw", $"Skipping cloud upload for excluded asset: {localPath}");
+
+                SetProperty(target, property, LocalAsset(normPath));
                 return;
             }
 
@@ -74,7 +88,7 @@ namespace Source2Roblox.Util
             catch (Exception e)
             {
                 Program.Emit("raw", $"Roblox rejected {localPath}; using the local asset instead. {e.Message}");
-                SetProperty(target, property, LocalAsset(NormalizeLocalPath(localPath)));
+                SetProperty(target, property, LocalAsset(normPath));
                 return;
             }
 
@@ -93,9 +107,23 @@ namespace Source2Roblox.Util
             Property targetProperty
         )
         {
-            if (!Program.UploadAssets || !Program.HasRobloxUploadCredentials)
+            string normPath = NormalizeLocalPath(localPath);
+            bool isExcluded = false;
+            foreach (var excluded in Program.ExcludedTextures)
             {
-                SetPropertyValue(targetProperty, LocalAsset(NormalizeLocalPath(localPath)));
+                if (normPath.IndexOf(excluded, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isExcluded = true;
+                    break;
+                }
+            }
+
+            if (isExcluded || !Program.UploadAssets || !Program.HasRobloxUploadCredentials)
+            {
+                if (isExcluded)
+                    Program.Emit("raw", $"Skipping cloud upload for excluded asset: {localPath}");
+
+                SetPropertyValue(targetProperty, LocalAsset(normPath));
                 return;
             }
 
@@ -108,7 +136,7 @@ namespace Source2Roblox.Util
             catch (Exception e)
             {
                 Program.Emit("raw", $"Roblox rejected {localPath}; using the local asset instead. {e.Message}");
-                SetPropertyValue(targetProperty, LocalAsset(NormalizeLocalPath(localPath)));
+                SetPropertyValue(targetProperty, LocalAsset(normPath));
                 return;
             }
 

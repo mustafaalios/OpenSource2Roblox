@@ -59,6 +59,7 @@ namespace Source2Roblox
         }
 
         public static event Action<string, string, object> OnEmit;
+        public static readonly HashSet<string> ExcludedTextures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public static void Emit(string type, string message, object data = null)
         {

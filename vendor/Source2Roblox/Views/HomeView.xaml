@@ -97,6 +97,39 @@
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,8" />
                         <ComboBox Name="MapsComboBox" IsEditable="True" />
+                        <ui:Button Name="ScanTexturesButton"
+                                   Content="Scan Map Textures"
+                                   Icon="Search24"
+                                   Margin="0,8,0,0"
+                                   Click="ScanTexturesButton_Click" />
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Texture Exclusions Card -->
+                <ui:Card Name="TextureExclusionsCard" Padding="20" Margin="0,0,0,12" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="Uploadable Textures"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Margin="0,0,0,6" />
+                        <TextBlock Text="Uncheck any textures you wish to exclude from cloud uploading (they will use local folder fallbacks)."
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10" />
+
+                        <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl Name="TexturesItemsControl">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding DisplayName}" 
+                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                  Checked="TextureCheckBox_Changed"
+                                                  Unchecked="TextureCheckBox_Changed"
+                                                  Margin="0,2,0,2" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </StackPanel>
                 </ui:Card>
 

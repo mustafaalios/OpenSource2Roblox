@@ -341,5 +341,106 @@ namespace Source2Roblox.Views
 
             OutputTitleLabel.Text        = LanguageManager.Get("Label_OutputTitle");
         }
+
+        private void TextureCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.CheckBox cb && cb.DataContext is TextureItem item)
+            {
+                item.IsChecked = cb.IsChecked ?? false;
+
+                if (item.IsChecked)
+                {
+                    Program.ExcludedTextures.Remove(item.TexturePath);
+                }
+                else
+                {
+                    Program.ExcludedTextures.Add(item.TexturePath);
+                }
+            }
+        }
+
+        private async void ScanTexturesButton_Click(object sender, RoutedEventArgs e)
+        {
+            string gameDir = GameDirTextBox.Text.Trim();
+            string map = MapsComboBox.Text.Trim();
+
+            if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+            {
+                System.Windows.MessageBox.Show("Please select a valid game directory first.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(map))
+            {
+                System.Windows.MessageBox.Show("Please enter or select a map name.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ScanTexturesButton.IsEnabled = false;
+            ProgressPanel.Visibility = Visibility.Visible;
+            ProgressStatusText.Text = "Scanning map textures...";
+
+            List<TextureItem> textureItems = new List<TextureItem>();
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var gameMount = new Source2Roblox.FileSystem.GameMount(gameDir);
+                    string bspPath = Path.Combine(gameDir, "maps", $"{map}.bsp");
+
+                    if (File.Exists(bspPath))
+                    {
+                        var bsp = new Source2Roblox.World.BSPFile(bspPath, gameMount);
+                        var uniqueTextures = bsp.TexDataStringData.Values
+                            .Select(t => t.ToLowerInvariant().Replace('\\', '/'))
+                            .Distinct()
+                            .OrderBy(t => t)
+                            .ToList();
+
+                        foreach (var tex in uniqueTextures)
+                        {
+                            // Skip tool textures
+                            if (tex.StartsWith("tools/") || tex == "tools/toolsnodraw" || tex == "tools/toolsblack")
+                                continue;
+
+                            textureItems.Add(new TextureItem
+                            {
+                                DisplayName = tex,
+                                TexturePath = tex,
+                                IsChecked = !Program.ExcludedTextures.Contains(tex)
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Dispatcher.Invoke(() => {
+                        System.Windows.MessageBox.Show($"Failed to scan textures: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    });
+                }
+            });
+
+            ScanTexturesButton.IsEnabled = true;
+            ProgressPanel.Visibility = Visibility.Collapsed;
+
+            if (textureItems.Count > 0)
+            {
+                TexturesItemsControl.ItemsSource = textureItems;
+                TextureExclusionsCard.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TextureExclusionsCard.Visibility = Visibility.Collapsed;
+                System.Windows.MessageBox.Show("No uploadable textures found on this map, or map file could not be parsed.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+    }
+
+    public class TextureItem
+    {
+        public string DisplayName { get; set; } = string.Empty;
+        public string TexturePath { get; set; } = string.Empty;
+        public bool IsChecked { get; set; } = true;
     }
 }
