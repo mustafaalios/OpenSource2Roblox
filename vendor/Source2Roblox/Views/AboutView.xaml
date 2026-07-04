@@ -16,7 +16,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- ===== Header ===== -->
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Name="AboutTitleLabel"
                        Text="About"
@@ -29,7 +28,6 @@
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
-            <!-- Tab strip — same pattern as Home page -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -58,14 +56,11 @@
             </Grid>
         </StackPanel>
 
-        <!-- ===== Tab Content ===== -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="Transparent">
             <Grid Background="Transparent">
 
-            <!-- About tab -->
             <StackPanel Name="AboutPanel" Background="Transparent">
 
-                <!-- What is this -->
                 <ui:Card Padding="20" Margin="0,0,0,14">
                     <StackPanel>
                         <TextBlock Name="WhatTitleLabel"
@@ -87,7 +82,6 @@ Textures are automatically extracted and placed in Roblox Studio's content direc
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Formats -->
                 <ui:Card Padding="20" Margin="0,0,0,14">
                     <StackPanel>
                         <TextBlock Name="FormatsTitleLabel"
@@ -126,7 +120,6 @@ Textures are automatically extracted and placed in Roblox Studio's content direc
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Links + License -->
                 <ui:Card Padding="20">
                     <StackPanel>
                         <TextBlock Name="LinksTitleLabel"
@@ -156,10 +149,8 @@ This project is released under the MIT License. You are free to use, modify, and
 
             </StackPanel>
 
-            <!-- Contributors tab -->
             <StackPanel Name="ContributorsPanel" Background="Transparent" Visibility="Collapsed">
 
-                <!-- Maintainers -->
                 <ui:Card Padding="20" Margin="0,0,0,14">
                     <StackPanel>
                         <TextBlock Name="MaintainersLabel"
@@ -172,7 +163,6 @@ This project is released under the MIT License. You are free to use, modify, and
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Contributors -->
                 <ui:Card Padding="20">
                     <StackPanel>
                         <TextBlock Name="ContributorsLabel"
@@ -190,7 +180,6 @@ This project is released under the MIT License. You are free to use, modify, and
             </Grid>
         </ScrollViewer>
 
-        <!-- ===== Version footer ===== -->
         <TextBlock Name="VersionLabel"
                    Grid.Row="2"
                    Text="v1.0.0"

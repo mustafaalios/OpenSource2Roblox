@@ -1,33 +1,47 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
 using Source2Roblox.Util;
 
 namespace Source2Roblox.Views
 {
     public partial class HomeView : Page
     {
+        private readonly ModeItem[] ModeItems = new[]
+        {
+            new ModeItem("Map",     "map"),
+            new ModeItem("Model",   "model"),
+            new ModeItem("Texture", "texture"),
+            new ModeItem("Advanced","advanced"),
+        };
+
         private string activeMode = "map";
         private List<GameInfo> discoveredGames = new List<GameInfo>();
         private GameInfo? selectedGame;
         private string previewPlacePath = string.Empty;
+        private int logLineCount;
+        private const int MaxLogLines = 2000;
 
         public HomeView()
         {
             InitializeComponent();
             
-            // Subscribe to console emits
+            ModeButtonsControl.ItemsSource = ModeItems;
+
             Program.OnEmit += Program_OnEmit;
 
-            // Load mode default
             SetActiveMode(activeMode);
 
-            // Load games
             RefreshGames();
         }
 
@@ -44,14 +58,10 @@ namespace Source2Roblox.Views
         private void SetActiveMode(string mode)
         {
             activeMode = mode;
-            
-            // Update button styles
-            ModeMapButton.Appearance = mode == "map" ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary;
-            ModeModelButton.Appearance = mode == "model" ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary;
-            ModeTextureButton.Appearance = mode == "texture" ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary;
-            ModeAdvancedButton.Appearance = mode == "advanced" ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary;
 
-            // Show/hide cards
+            foreach (var item in ModeItems)
+                item.IsActive = (item.Tag == mode);
+
             MapCard.Visibility = (mode == "map" || mode == "advanced") ? Visibility.Visible : Visibility.Collapsed;
             ModelCard.Visibility = (mode == "model" || mode == "advanced") ? Visibility.Visible : Visibility.Collapsed;
             TextureCard.Visibility = (mode == "texture" || mode == "advanced") ? Visibility.Visible : Visibility.Collapsed;
@@ -73,7 +83,6 @@ namespace Source2Roblox.Views
                 selectedGame = discoveredGames[idx];
                 GameDirTextBox.Text = selectedGame.GameDir;
                 
-                // Populate maps dropdown
                 MapsComboBox.Items.Clear();
                 foreach (var map in selectedGame.Maps)
                 {
@@ -87,7 +96,6 @@ namespace Source2Roblox.Views
             string path = GameDirTextBox.Text.Trim();
             if (Directory.Exists(path) && File.Exists(Path.Combine(path, "gameinfo.txt")))
             {
-                // Scan maps locally
                 MapsComboBox.Items.Clear();
                 string mapsDir = Path.Combine(path, "maps");
                 if (Directory.Exists(mapsDir))
@@ -134,12 +142,25 @@ namespace Source2Roblox.Views
         {
             Dispatcher.Invoke(() =>
             {
+                logLineCount++;
+                if (logLineCount > MaxLogLines)
+                {
+                    string text = LogTextBox.Text;
+                    int trimAt = text.IndexOf('\n', text.Length / 4);
+                    if (trimAt > 0)
+                    {
+                        LogTextBox.Text = text.Substring(trimAt + 1);
+                        logLineCount = LogTextBox.Text.Count(c => c == '\n') + 1;
+                    }
+                }
+
                 LogTextBox.AppendText($"[{type.ToUpper()}] {message}\r\n");
                 LogTextBox.ScrollToEnd();
 
                 if (type == "progress")
                 {
                     ProgressStatusText.Text = message;
+                    StatusLabel.Text = message;
                 }
                 else if (type == "output")
                 {
@@ -172,6 +193,12 @@ namespace Source2Roblox.Views
                     }
                 }
             });
+        }
+
+        private void ClearLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTextBox.Clear();
+            logLineCount = 0;
         }
 
         private async void RunButton_Click(object sender, RoutedEventArgs e)
@@ -227,7 +254,6 @@ namespace Source2Roblox.Views
                 args.Add(settings.RobloxCreatorId);
             }
 
-            // ── Build the history entry before we run ──────────────────────────
             var historyEntry = new ConversionHistoryEntry
             {
                 Timestamp       = DateTime.UtcNow,
@@ -290,11 +316,15 @@ namespace Source2Roblox.Views
 
             RunButton.IsEnabled = false;
             ProgressPanel.Visibility = Visibility.Visible;
+            StatusLabel.Text = "Converting...";
             LogTextBox.Clear();
+            logLineCount = 0;
             PreviewCard.Visibility = Visibility.Collapsed;
             LauncherErrorText.Visibility = Visibility.Collapsed;
 
             string runError = null;
+            var stopwatch = Stopwatch.StartNew();
+
             await Task.Run(() =>
             {
                 try
@@ -308,16 +338,26 @@ namespace Source2Roblox.Views
                 }
             });
 
-            // ── Record to history ──────────────────────────────────────────────
-            historyEntry.Succeeded     = runError == null;
-            historyEntry.ErrorMessage  = runError ?? string.Empty;
+            stopwatch.Stop();
+
+            historyEntry.Succeeded         = runError == null;
+            historyEntry.ErrorMessage      = runError ?? string.Empty;
+            historyEntry.DurationSeconds   = stopwatch.Elapsed.TotalSeconds;
+            historyEntry.TextureCount      = Program.ExcludedTextures.Count > 0 ? Program.ExcludedTextures.Count : 0;
+            historyEntry.ExcludedTextureCount = Program.ExcludedTextures.Count;
+
+            string outputRoot = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "Roblox Studio", "Source2Roblox Exports");
+            historyEntry.OutputPath = outputRoot;
+
             ConversionHistoryManager.Append(historyEntry);
 
             RunButton.IsEnabled = true;
             ProgressPanel.Visibility = Visibility.Collapsed;
+            StatusLabel.Text = runError == null ? "Done ✓" : "Failed ✘";
         }
 
-        // ── Load a historic entry back into the form (for Re-run) ──────────────
         public void LoadFromHistory(ConversionHistoryEntry entry)
         {
             GameDirTextBox.Text = entry.GameDir;
@@ -357,10 +397,10 @@ namespace Source2Roblox.Views
         public void UpdateLanguage()
         {
             ConversionModeLabel.Text     = LanguageManager.Get("Label_Mode");
-            ModeMapButton.Content        = "Map";
-            ModeModelButton.Content      = "Model";
-            ModeTextureButton.Content    = "Texture";
-            ModeAdvancedButton.Content   = "Advanced";
+            ModeItems[0].Name = LanguageManager.Get("Mode_Map")     == "Mode_Map"     ? "Map"      : LanguageManager.Get("Mode_Map");
+            ModeItems[1].Name = LanguageManager.Get("Mode_Model")   == "Mode_Model"   ? "Model"    : LanguageManager.Get("Mode_Model");
+            ModeItems[2].Name = LanguageManager.Get("Mode_Texture") == "Mode_Texture" ? "Texture"  : LanguageManager.Get("Mode_Texture");
+            ModeItems[3].Name = "Advanced";
 
             GameMountLabel.Text          = LanguageManager.Get("Label_Mount");
             SteamSelectLabel.Text        = LanguageManager.Get("Label_SteamSelect");
@@ -425,12 +465,13 @@ namespace Source2Roblox.Views
             ProgressStatusText.Text = "Scanning map textures...";
 
             List<TextureItem> textureItems = new List<TextureItem>();
+            Source2Roblox.FileSystem.GameMount gameMount = null;
 
             await Task.Run(() =>
             {
                 try
                 {
-                    var gameMount = new Source2Roblox.FileSystem.GameMount(gameDir);
+                    gameMount = new Source2Roblox.FileSystem.GameMount(gameDir);
                     string bspPath = Path.Combine(gameDir, "maps", $"{map}.bsp");
 
                     if (File.Exists(bspPath))
@@ -444,16 +485,47 @@ namespace Source2Roblox.Views
 
                         foreach (var tex in uniqueTextures)
                         {
-                            // Skip tool textures
                             if (tex.StartsWith("tools/") || tex == "tools/toolsnodraw" || tex == "tools/toolsblack")
                                 continue;
 
-                            textureItems.Add(new TextureItem
+                            var item = new TextureItem
                             {
                                 DisplayName = tex,
                                 TexturePath = tex,
                                 IsChecked = !Program.ExcludedTextures.Contains(tex)
-                            });
+                            };
+
+                            try
+                            {
+                                string vtfPath = $"materials/{tex}.vtf";
+                                using var stream = gameMount.OpenRead(vtfPath);
+                                if (stream != null)
+                                {
+                                    using var reader = new BinaryReader(stream);
+                                    var vtf = new Source2Roblox.Textures.VTFFile(reader, true);
+                                    item.Dimensions = $"{vtf.Width}×{vtf.Height}";
+
+                                    var previewImage = vtf.LowResImage ?? vtf.HighResImage;
+                                    if (previewImage is Bitmap bmp)
+                                    {
+                                        using var ms = new MemoryStream();
+                                        bmp.Save(ms, ImageFormat.Png);
+                                        ms.Position = 0;
+
+                                        var bi = new BitmapImage();
+                                        bi.BeginInit();
+                                        bi.CacheOption = BitmapCacheOption.OnLoad;
+                                        bi.StreamSource = ms;
+                                        bi.DecodePixelWidth = 36;
+                                        bi.EndInit();
+                                        bi.Freeze();
+                                        item.PreviewSource = bi;
+                                    }
+                                }
+                            }
+                            catch { }
+
+                            textureItems.Add(item);
                         }
                     }
                 }
@@ -486,5 +558,32 @@ namespace Source2Roblox.Views
         public string DisplayName { get; set; } = string.Empty;
         public string TexturePath { get; set; } = string.Empty;
         public bool IsChecked { get; set; } = true;
+        public BitmapSource PreviewSource { get; set; }
+        public string Dimensions { get; set; } = string.Empty;
+        public Visibility DimensionsVisibility =>
+            string.IsNullOrEmpty(Dimensions) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public class ModeItem : System.ComponentModel.INotifyPropertyChanged
+    {
+        private string _name;
+        private bool _isActive;
+
+        public string Tag { get; }
+        public string Name { get => _name; set { _name = value; OnPropertyChanged(); } }
+        public bool IsActive { get => _isActive; set { _isActive = value; OnPropertyChanged(); OnPropertyChanged(nameof(Appearance)); } }
+
+        public Wpf.Ui.Controls.ControlAppearance Appearance =>
+            IsActive ? Wpf.Ui.Controls.ControlAppearance.Primary : Wpf.Ui.Controls.ControlAppearance.Secondary;
+
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string name = null) =>
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+
+        public ModeItem(string name, string tag)
+        {
+            _name = name;
+            Tag = tag;
+        }
     }
 }

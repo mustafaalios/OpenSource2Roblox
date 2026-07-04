@@ -11,6 +11,7 @@ using RobloxFiles.DataTypes;
 using System.Linq;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Threading.Tasks;
 
 namespace Source2Roblox.World
 {
@@ -61,6 +62,7 @@ namespace Source2Roblox.World
 
         private const float ROUND_VERTEX_EPSILON = 0.01f;
         private const float MIN_EDGE_LENGTH_EPSILON = 0.1f;
+        private readonly object _lumpReadLock = new object();
 
         public static MemoryStream ReadBuffer(BinaryReader reader, int offset, int length)
         {
@@ -107,8 +109,6 @@ namespace Source2Roblox.World
 
         private void ReadLump(BinaryReader bspReader, LumpType type)
         {
-            Console.WriteLine($"\tReading '{type}' Lump...");
-
             var stream = bspReader.BaseStream;
             var i = (int)type;
 
@@ -282,12 +282,129 @@ namespace Source2Roblox.World
 
                 for (int i = 0; i < 64; i++)
                 {
-                    var lumpType = (LumpType)i;
-                    ReadLump(reader, lumpType);
+                    Lumps[i] = new Lump()
+                    {
+                        Type = (LumpType)i,
+                        Offset = reader.ReadInt32(),
+                        Length = reader.ReadInt32(),
+                        Version = reader.ReadInt32(),
+                        Uncompressed = reader.ReadInt32()
+                    };
                 }
+
+                // Phase 2: Process lump data in parallel
+                Parallel.For(0, 64, i =>
+                {
+                    var lump = Lumps[i];
+                    if (lump.Length > 0 && lump.Offset > 0)
+                        ProcessLump(reader, lump);
+                });
 
                 MapRevision = reader.ReadInt32();
                 GameLumps.ForEach(gameLump => gameLump.Read(reader));
+            }
+        }
+        
+        private void ProcessLump(BinaryReader bspReader, Lump lump)
+        {
+            int length = lump.Length;
+            int offset = lump.Offset;
+
+            if (lump.Type == LumpType.PakFile)
+            {
+                MemoryStream pakBuffer;
+                lock (_lumpReadLock) { pakBuffer = ReadBuffer(bspReader, offset, length); }
+                var archive = new ZipArchive(pakBuffer);
+                GameMount.BindZipArchive(Name, archive, Game);
+                return;
+            }
+
+            MemoryStream buffer;
+            lock (_lumpReadLock) { buffer = ReadBuffer(bspReader, offset, length); }
+            using (buffer)
+            using (var reader = new BinaryReader(buffer))
+            {
+                switch (lump.Type)
+                {
+                    case LumpType.Entities:
+                        Entity.ReadEntities(reader, Entities);
+                        break;
+                    case LumpType.Planes:
+                        reader.ReadToEnd(Planes);
+                        break;
+                    case LumpType.TexData:
+                        reader.ReadToEnd(TexData);
+                        break;
+                    case LumpType.Vertices:
+                        reader.ReadToEnd(Vertices, reader.ReadVector3);
+                        break;
+                    case LumpType.TexInfo:
+                        reader.ReadToEnd(TexInfo);
+                        break;
+                    case LumpType.Faces:
+                        reader.ReadToEnd(Faces);
+                        break;
+                    case LumpType.Edges:
+                        reader.ReadToEnd(Edges, reader.ReadUInt16);
+                        break;
+                    case LumpType.SurfEdges:
+                        reader.ReadToEnd(SurfEdges, reader.ReadInt32);
+                        break;
+                    case LumpType.Models:
+                        reader.ReadToEnd(BrushModels);
+                        break;
+                    case LumpType.Brushes:
+                        reader.ReadToEnd(Brushes);
+                        break;
+                    case LumpType.BrushSides:
+                        reader.ReadToEnd(BrushSides);
+                        break;
+                    case LumpType.Displacements:
+                        reader.ReadToEnd(Displacements);
+                        break;
+                    case LumpType.VertNormals:
+                        reader.ReadToEnd(VertNormals, reader.ReadVector3);
+                        break;
+                    case LumpType.VertNormalIndices:
+                        reader.ReadToEnd(VertNormalIndices, reader.ReadUInt16);
+                        break;
+                    case LumpType.DispVerts:
+                        reader.ReadToEnd(DispVerts);
+                        break;
+                    case LumpType.GameLump:
+                    {
+                        int numLumps = reader.ReadInt32();
+                        for (int j = 0; j < numLumps; j++)
+                        {
+                            var gameLump = new GameLump(reader);
+                            GameLumps.Add(gameLump);
+                        }
+                        break;
+                    }
+                    case LumpType.PakFile:
+                        break;
+                    case LumpType.TexDataStringData:
+                    {
+                        int start = 0;
+                        while (buffer.Position < buffer.Length)
+                        {
+                            string value = reader.ReadString(null);
+                            TexDataStringData.Add(start, value);
+                            start = (int)buffer.Position;
+                        }
+                        break;
+                    }
+                    case LumpType.TexDataStringTable:
+                        reader.ReadToEnd(TexDataStringTable, reader.ReadInt32);
+                        break;
+                    case LumpType.DispTris:
+                        reader.ReadToEnd(DispTris, () =>
+                        {
+                            var tags = reader.ReadUInt16();
+                            return (DispTriTags)tags;
+                        });
+                        break;
+                }
             }
         }
 

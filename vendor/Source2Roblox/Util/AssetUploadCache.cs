@@ -108,7 +108,7 @@ namespace Source2Roblox.Util
             }
             catch
             {
-                // Fallback to uploading
+                // fallback to uploading
             }
             return null;
         }
@@ -129,7 +129,7 @@ namespace Source2Roblox.Util
             }
             catch
             {
-                // Ignore cache errors
+                // ignore cache errors
             }
         }
     }

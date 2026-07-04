@@ -18,20 +18,17 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Title Bar -->
         <ui:TitleBar Title="OpenSource2Roblox Studio"
                      Icon="icon.png"
                      Grid.Row="0"
                      Background="Transparent" />
 
-        <!-- Main Content -->
         <Grid Grid.Row="1" Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Navigation Pane -->
             <ui:NavigationView Name="RootNavigation"
                                Grid.Column="0"
                                PaneDisplayMode="Left"
@@ -62,7 +59,6 @@
                 </ui:NavigationView.FooterMenuItems>
             </ui:NavigationView>
 
-            <!-- Page Frame -->
             <Frame Name="RootFrame"
                    Grid.Column="1"
                    NavigationUIVisibility="Hidden" />

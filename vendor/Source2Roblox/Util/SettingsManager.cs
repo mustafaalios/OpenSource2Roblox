@@ -48,7 +48,6 @@ namespace Source2Roblox.Util
                 settings = new AppSettings();
             }
 
-            // Migration from old Electron app settings
             if (string.IsNullOrEmpty(settings.RobloxApiKey))
             {
                 try
@@ -70,7 +69,6 @@ namespace Source2Roblox.Util
                             settings.RobloxCreatorId = oldSettings.Value<string>("robloxCreatorId") ?? string.Empty;
                             settings.RobloxCreatorType = oldSettings.Value<string>("robloxCreatorType") ?? "User";
                             
-                            // Capitalize CreatorType to match "User" / "Group"
                             if (!string.IsNullOrEmpty(settings.RobloxCreatorType))
                             {
                                 settings.RobloxCreatorType = char.ToUpper(settings.RobloxCreatorType[0]) + settings.RobloxCreatorType.Substring(1).ToLowerInvariant();
@@ -80,7 +78,6 @@ namespace Source2Roblox.Util
                             settings.UploadMeshes = oldSettings.Value<bool?>("uploadMeshes") ?? false;
                             settings.CustomTexturesDir = oldSettings.Value<string>("customTexturesDir") ?? string.Empty;
 
-                            // Save migrated settings back so they persist
                             Save(settings);
                         }
                     }

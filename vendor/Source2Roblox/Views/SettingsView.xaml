@@ -7,13 +7,11 @@
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
       Title="SettingsView"
-      Background="Transparent">
+      >
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Border Padding="28,20,28,28">
+            <StackPanel MaxWidth="640" HorizontalAlignment="Left">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
-        <Border Padding="28,20,28,28" Background="Transparent">
-            <StackPanel MaxWidth="640" HorizontalAlignment="Left" Background="Transparent">
-
-                <!-- Page Title -->
                 <TextBlock Name="SettingsTitleLabel"
                            Text="Settings"
                            FontSize="28"
@@ -24,7 +22,6 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            Margin="0,0,0,24" />
 
-                <!-- Visual &amp; Language -->
                 <ui:Card Padding="20" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Name="VisualOptionsLabel"
@@ -33,7 +30,6 @@
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,18" />
 
-                        <!-- Language -->
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -54,11 +50,6 @@
                                       Grid.Column="1"
                                       VerticalAlignment="Center" />
                         </Grid>
-
-                        <!-- Separator -->
-                        <Separator Margin="0,0,0,16" Opacity="0.3" />
-
-                        <!-- Theme -->
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -82,8 +73,6 @@
 
                     </StackPanel>
                 </ui:Card>
-
-                <!-- Custom Textures -->
                 <ui:Card Padding="20" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Name="CustomTexturesLabel"
@@ -115,8 +104,6 @@
                         </Grid>
                     </StackPanel>
                 </ui:Card>
-
-                <!-- Roblox Cloud Integration -->
                 <ui:Card Padding="20" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Name="RobloxUploadLabel"
@@ -125,7 +112,6 @@
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,14" />
 
-                        <!-- Upload Textures Toggle -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -146,11 +132,6 @@
                                              Grid.Column="1"
                                              VerticalAlignment="Center" />
                         </Grid>
-
-                        <!-- Separator -->
-                        <Separator Margin="0,0,0,12" Opacity="0.3" />
-
-                        <!-- Upload Meshes Toggle -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -171,11 +152,6 @@
                                              Grid.Column="1"
                                              VerticalAlignment="Center" />
                         </Grid>
-
-                        <!-- Separator -->
-                        <Separator Margin="0,0,0,12" Opacity="0.3" />
-
-                        <!-- API Key -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -197,11 +173,6 @@
                                         Grid.Column="1"
                                         VerticalAlignment="Center" />
                         </Grid>
-
-                        <!-- Separator -->
-                        <Separator Margin="0,0,0,12" Opacity="0.3" />
-
-                        <!-- Creator Type -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -222,11 +193,6 @@
                                       Grid.Column="1"
                                       VerticalAlignment="Center" />
                         </Grid>
-
-                        <!-- Separator -->
-                        <Separator Margin="0,0,0,12" Opacity="0.3" />
-
-                        <!-- Creator ID -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -249,8 +215,6 @@
                         </Grid>
                     </StackPanel>
                 </ui:Card>
-
-                <!-- Asset Caching -->
                 <ui:Card Padding="20" Margin="0,0,0,24">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -279,7 +243,6 @@
                     </Grid>
                 </ui:Card>
 
-                <!-- Save Row -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <ui:Button Name="SaveSettingsButton"
                                Content="Save Settings"
@@ -294,7 +257,6 @@
                                   FontWeight="SemiBold"
                                   FontSize="13" />
                 </StackPanel>
-
             </StackPanel>
         </Border>
     </ScrollViewer>

@@ -8,14 +8,18 @@ namespace Source2Roblox.Util
     public class ConversionHistoryEntry
     {
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public string ConversionType { get; set; } = string.Empty;  // "map", "model", "texture", "advanced"
+        public string ConversionType { get; set; } = string.Empty;
         public string GameDir { get; set; } = string.Empty;
         public string GameName { get; set; } = string.Empty;
-        public string Target { get; set; } = string.Empty;           // map name, model path, or vtf path
+        public string Target { get; set; } = string.Empty;
         public bool UploadedTextures { get; set; } = false;
         public bool UploadedMeshes { get; set; } = false;
         public bool Succeeded { get; set; } = true;
         public string ErrorMessage { get; set; } = string.Empty;
+        public double DurationSeconds { get; set; }
+        public string OutputPath { get; set; } = string.Empty;
+        public int TextureCount { get; set; }
+        public int ExcludedTextureCount { get; set; }
 
         [JsonIgnore]
         public string DisplayTarget => string.IsNullOrEmpty(Target) ? "(unknown)" : Target;
@@ -35,6 +39,19 @@ namespace Source2Roblox.Util
 
         [JsonIgnore]
         public string DisplayTimestamp => Timestamp.ToLocalTime().ToString("yyyy-MM-dd  HH:mm");
+
+        [JsonIgnore]
+        public string DisplayDuration
+        {
+            get
+            {
+                if (DurationSeconds <= 0) return string.Empty;
+                var ts = TimeSpan.FromSeconds(DurationSeconds);
+                if (ts.TotalMinutes >= 1)
+                    return $"{(int)ts.TotalMinutes}m {ts.Seconds}s";
+                return $"{ts.TotalSeconds:F1}s";
+            }
+        }
 
         [JsonIgnore]
         public string StatusBadge => Succeeded ? "✔" : "✘";

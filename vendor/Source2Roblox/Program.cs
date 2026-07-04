@@ -154,7 +154,6 @@ namespace Source2Roblox
                 return 1;
             }
 
-            // Clear any state from a previous invocation (GUI calls Main() multiple times)
             argMap.Clear();
             LOCAL_ONLY = true;
             UploadAssets = false;
@@ -168,7 +167,6 @@ namespace Source2Roblox
             Textures.ValveMaterial.ClearCache();
             Util.StudioContentPath.Reset();
 
-            #region Process Launch Options
             string argKey = "";
 
             foreach (string arg in args)
@@ -189,7 +187,6 @@ namespace Source2Roblox
 
             if (!string.IsNullOrEmpty(argKey))
                 argMap[argKey] = "";
-            #endregion
 
             string noPrompt = GetArg("-noPrompt");
             string upload   = GetArg("-upload");
@@ -268,26 +265,6 @@ namespace Source2Roblox
             {
                 Emit("error", e.Message, new { detail = e.ToString() });
                 return 1;
-            }
-
-            if (mesh != null)
-            {
-                var load = RobloxMeshFile.Open(mesh);
-                
-                using (var stream = File.OpenWrite(mesh + "_PATCH"))
-                    load.Save(stream);
-
-                var reopen = RobloxMeshFile.Open(mesh + "_PATCH");
-                
-                var oldBones = load.Bones
-                    .Select(bone => bone.CFrame.ToString())
-                    .ToList();
-
-                var newBones = reopen.Bones
-                    .Select(bone => bone.CFrame.ToString())
-                    .ToList();
-
-                Debugger.Break();
             }
 
             var tasks = new List<Task>();

@@ -13,6 +13,8 @@ namespace Source2Roblox.FileSystem
 
         private readonly Dictionary<string, string> Routing;
         private readonly Dictionary<string, VPKFile> Mounts;
+        private readonly Dictionary<string, string> _pathToVpk = new Dictionary<string, string>();
+        private readonly List<string> _vpkPriority = new List<string>();
 
         private static readonly KVSerializer GameInfoHelper = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
 
@@ -137,6 +139,11 @@ namespace Source2Roblox.FileSystem
 
             Console.WriteLine("PakFile mounted!");
             Mounts[name] = new VPKFile(archive);
+            lock (routingLock)
+            {
+                _pathToVpk.Clear();
+                _vpkPriority.Clear();
+            }
         }
 
         public static void BindZipArchive(string name, ZipArchive archive, GameMount game = null)
@@ -179,14 +186,39 @@ namespace Source2Roblox.FileSystem
                     }
                 }
 
-                foreach (string name in Mounts.Keys)
+                if (_pathToVpk.TryGetValue(path, out string cachedName))
                 {
-                    VPKFile vpk = Mounts[name];
-
-                    if (vpk.HasFile(path))
+                    route = cachedName;
+                }
+                else
+                {
+                    foreach (string priorityName in _vpkPriority)
                     {
-                        route = name;
-                        break;
+                        VPKFile vpkPri = Mounts[priorityName];
+                        if (vpkPri.HasFile(path))
+                        {
+                            route = priorityName;
+                            _pathToVpk[path] = priorityName;
+                            break;
+                        }
+                    }
+
+                    if (route == null)
+                    {
+                        foreach (string name2 in Mounts.Keys)
+                        {
+                            if (_vpkPriority.Contains(name2))
+                                continue;
+
+                            VPKFile vpk2 = Mounts[name2];
+                            if (vpk2.HasFile(path))
+                            {
+                                route = name2;
+                                _pathToVpk[path] = name2;
+                                _vpkPriority.Insert(0, name2);
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -240,6 +272,10 @@ namespace Source2Roblox.FileSystem
 
             // Clear invalid route.
             Routing.Remove(path);
+            lock (routingLock)
+            {
+                _pathToVpk.Remove(path);
+            }
 
             // Try fetching again.
             return OpenRead(path);

@@ -76,7 +76,6 @@ namespace Source2Roblox.Util
                 string commonDir = Path.Combine(library, "steamapps", "common");
                 if (!Directory.Exists(commonDir)) continue;
 
-                // Scan hint directories
                 foreach (string title in SourceGameHints)
                 {
                     string gameRoot = Path.Combine(commonDir, title);
@@ -92,7 +91,6 @@ namespace Source2Roblox.Util
                     catch { }
                 }
 
-                // General scan
                 try
                 {
                     foreach (string gameRoot in Directory.GetDirectories(commonDir))
@@ -143,7 +141,6 @@ namespace Source2Roblox.Util
         {
             var maps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Scan maps folder
             string mapsDir = Path.Combine(gameDir, "maps");
             if (Directory.Exists(mapsDir))
             {

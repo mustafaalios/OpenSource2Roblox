@@ -11,8 +11,6 @@ namespace Source2Roblox.Views
     {
         private AppSettings settings;
 
-        // Supported language overrides shown in the dropdown.
-        // First entry ("System default") maps to an empty override tag.
         private static readonly (string Display, string Tag)[] SupportedLanguages =
         {
             ("System default",  ""),
@@ -27,11 +25,9 @@ namespace Source2Roblox.Views
             InitializeComponent();
             settings = SettingsManager.Load();
 
-            // Language
             foreach (var (display, _) in SupportedLanguages)
                 LanguageComboBox.Items.Add(display);
 
-            // Select whichever entry matches the saved override tag
             int langIdx = 0;
             for (int i = 0; i < SupportedLanguages.Length; i++)
             {
@@ -43,7 +39,6 @@ namespace Source2Roblox.Views
             }
             LanguageComboBox.SelectedIndex = langIdx;
 
-            // Theme
             ThemeComboBox.Items.Add("System");
             ThemeComboBox.Items.Add("Light");
             ThemeComboBox.Items.Add("Dark");
@@ -51,7 +46,6 @@ namespace Source2Roblox.Views
 
             CustomTexturesTextBox.Text = settings.CustomTexturesDir;
 
-            // Roblox Upload Settings
             UploadAssetsToggle.IsChecked = settings.UploadAssets;
             UploadMeshesToggle.IsChecked = settings.UploadMeshes;
             ApiKeyTextBox.Text = settings.RobloxApiKey;
@@ -115,7 +109,6 @@ namespace Source2Roblox.Views
                 ? SupportedLanguages[idx].Tag
                 : "";
 
-            // Save Roblox Upload Settings
             settings.UploadAssets = UploadAssetsToggle.IsChecked == true;
             settings.UploadMeshes = UploadMeshesToggle.IsChecked == true;
             settings.RobloxApiKey = ApiKeyTextBox.Text.Trim();
@@ -124,7 +117,6 @@ namespace Source2Roblox.Views
 
             SettingsManager.Save(settings);
 
-            // Apply culture immediately so UI updates without restart
             LanguageManager.SetCulture(settings.LanguageOverride);
 
             var mainWindow = Window.GetWindow(this) as MainWindow;
@@ -146,7 +138,6 @@ namespace Source2Roblox.Views
         {
             try
             {
-                // Clear in-memory cache to prevent writing it back on exit
                 AssetUploadCache.ClearCache();
 
                 string cachePathNew = Path.Combine(

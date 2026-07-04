@@ -16,11 +16,9 @@
             <ColumnDefinition Width="2*" MinWidth="260" />
         </Grid.ColumnDefinitions>
 
-        <!-- ===== LEFT: Configuration Panel ===== -->
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Background="Transparent">
             <StackPanel Background="Transparent">
 
-                <!-- Section Header -->
                 <TextBlock Name="ConversionModeLabel"
                            Text="CONVERSION MODE"
                            FontSize="11"
@@ -28,21 +26,23 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            Margin="0,0,0,8" />
 
-                <!-- Mode Selector: 4 equal buttons -->
-                <Grid Margin="0,0,0,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:Button Name="ModeMapButton"      Content="Map"      Grid.Column="0" Margin="0,0,4,0"  Click="ModeButton_Click" Tag="map"      Appearance="Primary"    HorizontalAlignment="Stretch" Height="32" FontSize="13" />
-                    <ui:Button Name="ModeModelButton"    Content="Model"    Grid.Column="1" Margin="4,0,4,0"  Click="ModeButton_Click" Tag="model"    Appearance="Secondary"  HorizontalAlignment="Stretch" Height="32" FontSize="13" />
-                    <ui:Button Name="ModeTextureButton"  Content="Texture"  Grid.Column="2" Margin="4,0,4,0"  Click="ModeButton_Click" Tag="texture"  Appearance="Secondary"  HorizontalAlignment="Stretch" Height="32" FontSize="13" />
-                    <ui:Button Name="ModeAdvancedButton" Content="Advanced" Grid.Column="3" Margin="4,0,0,0"  Click="ModeButton_Click" Tag="advanced" Appearance="Secondary"  HorizontalAlignment="Stretch" Height="32" FontSize="13" />
-                </Grid>
+                <ItemsControl Name="ModeButtonsControl" Margin="0,0,0,20">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:Button Content="{Binding Name}" Tag="{Binding Tag}"
+                                       Click="ModeButton_Click"
+                                       Appearance="{Binding Appearance}"
+                                       HorizontalAlignment="Stretch" Height="32" FontSize="13"
+                                       Margin="2,0,2,0" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                <!-- Source Game Mount Card -->
                 <ui:Card Padding="20" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Name="GameMountLabel"
@@ -83,7 +83,6 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Map Details Card -->
                 <ui:Card Name="MapCard" Padding="20" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Name="MapDetailsLabel"
@@ -105,7 +104,6 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Texture Exclusions Card -->
                 <ui:Card Name="TextureExclusionsCard" Padding="20" Margin="0,0,0,12" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="Uploadable Textures"
@@ -117,15 +115,38 @@
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10" />
 
-                        <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
                             <ItemsControl Name="TexturesItemsControl">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox Content="{Binding DisplayName}" 
-                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
-                                                  Checked="TextureCheckBox_Changed"
-                                                  Unchecked="TextureCheckBox_Changed"
-                                                  Margin="0,2,0,2" />
+                                        <Grid Margin="0,3,0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0"
+                                                    Width="36" Height="36"
+                                                    CornerRadius="4"
+                                                    Background="#1A808080"
+                                                    Margin="0,0,10,0"
+                                                    ClipToBounds="True">
+                                                <Image Source="{Binding PreviewSource}"
+                                                       Stretch="UniformToFill"
+                                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <CheckBox Content="{Binding DisplayName}"
+                                                          IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                          Checked="TextureCheckBox_Changed"
+                                                          Unchecked="TextureCheckBox_Changed"
+                                                          Margin="0" />
+                                                <TextBlock Text="{Binding Dimensions}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                           Margin="24,0,0,0"
+                                                           Visibility="{Binding DimensionsVisibility}" />
+                                            </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -133,7 +154,6 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Model Details Card -->
                 <ui:Card Name="ModelCard" Padding="20" Visibility="Collapsed" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Name="ModelDetailsLabel"
@@ -150,7 +170,6 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Texture Details Card -->
                 <ui:Card Name="TextureCard" Padding="20" Visibility="Collapsed" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Name="TextureDetailsLabel"
@@ -179,7 +198,6 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Convert Button -->
                 <ui:Button Name="RunButton"
                            Content="Convert Assets"
                            FontSize="14"
@@ -188,9 +206,15 @@
                            Appearance="Primary"
                            HorizontalAlignment="Stretch"
                            Click="RunButton_Click"
-                           Margin="0,8,0,12" />
+                           Margin="0,8,0,4" />
 
-                <!-- Local Preview Card -->
+                <TextBlock Name="StatusLabel"
+                           Text="Ready"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,12" />
+
                 <ui:Card Name="PreviewCard" Padding="20" Visibility="Collapsed" Margin="0,0,0,0">
                     <StackPanel>
                         <TextBlock Name="PreviewTitleLabel"
@@ -221,10 +245,8 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Spacer column -->
         <Rectangle Grid.Column="1" />
 
-        <!-- ===== RIGHT: Output Panel ===== -->
         <Grid Grid.Column="2" Background="Transparent">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -232,15 +254,26 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock Name="OutputTitleLabel"
-                       Text="OUTPUT"
-                       FontSize="11"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Grid.Row="0"
-                       Margin="0,0,0,8" />
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Name="OutputTitleLabel"
+                           Text="OUTPUT"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           VerticalAlignment="Center" />
+                <ui:Button Name="ClearLogButton"
+                           Content="Clear"
+                           Grid.Column="1"
+                           FontSize="11"
+                           Height="24"
+                           Padding="8,0"
+                           Click="ClearLogButton_Click" />
+            </Grid>
 
-            <!-- Progress Indicator -->
             <StackPanel Grid.Row="1" Margin="0,0,0,10" Name="ProgressPanel" Visibility="Collapsed">
                 <TextBlock Name="ProgressStatusText"
                            Text="Converting..."
@@ -249,7 +282,6 @@
                 <ProgressBar Name="ConversionProgressBar" Height="4" IsIndeterminate="True" />
             </StackPanel>
 
-            <!-- Console Output: dark terminal panel clipped to rounded corners -->
             <Border Grid.Row="2"
                     CornerRadius="8"
                     ClipToBounds="True"

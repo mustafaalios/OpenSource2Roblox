@@ -14,10 +14,10 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Page Title Row -->
         <StackPanel Grid.Row="0" Margin="0,0,0,6">
             <TextBlock Name="HistoryTitleLabel"
                        Text="Conversion History"
@@ -30,7 +30,6 @@
                        Margin="0,4,0,0" />
         </StackPanel>
 
-        <!-- Toolbar Row -->
         <Grid Grid.Row="1" Margin="0,12,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -39,20 +38,17 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!-- Filter box -->
             <ui:TextBox Name="SearchBox"
                         Grid.Column="0"
                         PlaceholderText="Filter by map, game or type…"
                         TextChanged="SearchBox_TextChanged" />
 
-            <!-- Open file button -->
             <ui:Button Name="OpenFileButton"
                        Grid.Column="1"
                        Content="Open history.json"
                        Icon="Document24"
                        Click="OpenFileButton_Click" />
 
-            <!-- Clear button -->
             <ui:Button Name="ClearHistoryButton"
                        Grid.Column="3"
                        Content="Clear History"
@@ -61,9 +57,33 @@
                        Click="ClearHistoryButton_Click" />
         </Grid>
 
-        <!-- Empty-state banner (shown when no entries) -->
+        <Border Name="StatsBar"
+                Grid.Row="2"
+                CornerRadius="6"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                Padding="16,8"
+                Margin="0,0,0,12"
+                Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Name="StatsTotalLabel"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="0,0,20,0" />
+                <TextBlock Name="StatsSuccessLabel"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="0,0,20,0" />
+                <TextBlock Name="StatsLastGameLabel"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
         <Border Name="EmptyState"
-                Grid.Row="3"
+                Grid.Row="4"
                 CornerRadius="8"
                 Background="#0A808080"
                 Visibility="Collapsed">
@@ -86,85 +106,142 @@
             </StackPanel>
         </Border>
 
-        <!-- History List -->
-        <ScrollViewer Grid.Row="3"
-                      Name="HistoryScroll"
-                      VerticalScrollBarVisibility="Auto"
-                      Background="Transparent">
-            <ItemsControl Name="HistoryList">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,8"
-                                CornerRadius="8"
-                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1">
-                            <Grid Margin="16,12,16,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+        <ListBox Name="HistoryList"
+                 Grid.Row="4"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <ContentPresenter />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,0,0,8"
+                            CornerRadius="8"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <Grid Margin="16,12,16,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                                <!-- Status badge -->
-                                <Border Grid.Column="0"
-                                        Width="36" Height="36"
-                                        CornerRadius="6"
-                                        Background="{Binding StatusBackground}"
-                                        VerticalAlignment="Center"
-                                        Margin="0,0,14,0">
-                                    <TextBlock Text="{Binding StatusBadge}"
-                                               FontSize="16"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center" />
-                                </Border>
+                            <Border Grid.Column="0"
+                                    Width="36" Height="36"
+                                    CornerRadius="6"
+                                    Background="{Binding StatusBackground}"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="{Binding StatusBadge}"
+                                           FontSize="16"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
 
-                                <!-- Main info -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                                        <Border CornerRadius="3"
-                                                Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                                Padding="5,1"
-                                                Margin="0,0,6,0">
-                                            <TextBlock Text="{Binding DisplayType}"
-                                                       FontSize="10"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="White" />
-                                        </Border>
-                                        <TextBlock Text="{Binding DisplayTarget}"
-                                                   FontSize="13"
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                    <Border CornerRadius="3"
+                                            Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                            Padding="5,1"
+                                            Margin="0,0,6,0">
+                                        <TextBlock Text="{Binding DisplayType}"
+                                                   FontSize="10"
                                                    FontWeight="SemiBold"
-                                                   VerticalAlignment="Center" />
-                                    </StackPanel>
+                                                   Foreground="White" />
+                                    </Border>
+                                    <TextBlock Text="{Binding DisplayTarget}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                     <TextBlock Text="{Binding DisplayGame}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <TextBlock Text="{Binding ErrorMessage}"
-                                               FontSize="11"
-                                               Foreground="#E05050"
-                                               Visibility="{Binding ErrorVisibility}"
-                                               TextWrapping="Wrap"
-                                               Margin="0,2,0,0" />
+                                    <TextBlock Text="{Binding DisplayDuration}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                               Margin="10,0,0,0"
+                                               Visibility="{Binding DurationVisibility}" />
                                 </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
+                                            Visibility="{Binding BadgesVisibility}">
+                                    <Border CornerRadius="3"
+                                            Background="#1A2ECC71"
+                                            Padding="5,1"
+                                            Margin="0,0,4,0"
+                                            Visibility="{Binding TexturesUploadedVisibility}">
+                                        <TextBlock Text="Textures ↑"
+                                                   FontSize="9"
+                                                   Foreground="#2ECC71" />
+                                    </Border>
+                                    <Border CornerRadius="3"
+                                            Background="#1A3498DB"
+                                            Padding="5,1"
+                                            Margin="0,0,4,0"
+                                            Visibility="{Binding MeshesUploadedVisibility}">
+                                        <TextBlock Text="Meshes ↑"
+                                                   FontSize="9"
+                                                   Foreground="#3498DB" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{Binding ErrorMessage}"
+                                           FontSize="11"
+                                           Foreground="#E05050"
+                                           Visibility="{Binding ErrorVisibility}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding DisplayOutputPath}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding OutputPathVisibility}"
+                                           TextTrimming="CharacterEllipsis"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
 
-                                <!-- Right: timestamp + re-run -->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                    <TextBlock Text="{Binding DisplayTimestamp}"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                               HorizontalAlignment="Right"
-                                               Margin="0,0,0,6" />
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding DisplayTimestamp}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Right"
+                                           Margin="0,0,0,4" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <ui:Button Content="📂"
+                                               Tag="{Binding}"
+                                               Click="OpenOutputButton_Click"
+                                               FontSize="12"
+                                               Height="28"
+                                               Padding="6,0"
+                                               Margin="0,0,4,0"
+                                               ToolTip="Open output folder"
+                                               Visibility="{Binding OutputPathVisibility}" />
                                     <ui:Button Content="Re-run"
                                                Icon="Play24"
                                                Tag="{Binding}"
                                                Click="RerunButton_Click"
                                                HorizontalAlignment="Right" />
                                 </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </Page>

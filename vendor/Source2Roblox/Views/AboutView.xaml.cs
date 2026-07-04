@@ -6,7 +6,7 @@ namespace Source2Roblox.Views
 {
     public partial class AboutView : Page
     {
-        private const string AppVersion = "1.0.0";
+        private const string AppVersion = "1.1.0";
 
         private static readonly PersonEntry[] Maintainers =
         {
@@ -17,8 +17,6 @@ namespace Source2Roblox.Views
         {
             new PersonEntry("SenorLawyer",   "Original conversion base (non active contributer)",     "https://github.com/SenorLawyer"),
         };
-
-        private static readonly PersonEntry[] Libraries = Array.Empty<PersonEntry>();
 
         private string activeTab = "about";
 

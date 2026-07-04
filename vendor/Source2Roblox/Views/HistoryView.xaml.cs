@@ -19,16 +19,37 @@ namespace Source2Roblox.Views
             Loaded += (_, _) => Refresh();
         }
 
-        // ─── Public ──────────────────────────────────────────────────────────────
-
         public void Refresh()
         {
             var entries = ConversionHistoryManager.Load();
             allItems = entries.Select(e => new HistoryViewModel(e)).ToList();
+            UpdateStats();
             ApplyFilter(SearchBox.Text);
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────────
+        private void UpdateStats()
+        {
+            if (allItems.Count == 0)
+            {
+                StatsBar.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            StatsBar.Visibility = Visibility.Visible;
+
+            int total = allItems.Count;
+            int succeeded = allItems.Count(i => i.Entry.Succeeded);
+            double rate = total > 0 ? (succeeded * 100.0 / total) : 0;
+
+            StatsTotalLabel.Text = $"{total} conversion{(total != 1 ? "s" : "")}";
+            StatsSuccessLabel.Text = $"{rate:F0}% success rate";
+
+            var lastGame = allItems.FirstOrDefault()?.DisplayGame ?? string.Empty;
+            if (!string.IsNullOrEmpty(lastGame))
+                StatsLastGameLabel.Text = $"Last: {lastGame}";
+            else
+                StatsLastGameLabel.Text = string.Empty;
+        }
 
         private void ApplyFilter(string query)
         {
@@ -46,10 +67,8 @@ namespace Source2Roblox.Views
             var list = filtered.ToList();
             HistoryList.ItemsSource = list;
             EmptyState.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            HistoryScroll.Visibility = list.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            HistoryList.Visibility = list.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        // ─── Event handlers ───────────────────────────────────────────────────────
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -105,16 +124,29 @@ namespace Source2Roblox.Views
 
                 homeView.LoadFromHistory(vm.Entry);
 
-                // Navigate to home
                 if (System.Windows.Application.Current.MainWindow is MainWindow mw)
                     mw.NavigateTo("home");
             }
         }
 
+        private void OpenOutputButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Wpf.Ui.Controls.Button btn && btn.Tag is HistoryViewModel vm)
+            {
+                string path = vm.Entry.OutputPath;
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                    }
+                    catch { }
+                }
+            }
+        }
+
         public void UpdateLanguage() { }
     }
-
-    // ─── View model wrapper ───────────────────────────────────────────────────────
 
     public class HistoryViewModel
     {
@@ -123,12 +155,32 @@ namespace Source2Roblox.Views
         public string DisplayTarget    => Entry.DisplayTarget;
         public string DisplayType      => Entry.DisplayType;
         public string DisplayGame      => Entry.DisplayGame;
-        public string DisplayTimestamp => Entry.DisplayTimestamp;
+        public string DisplayTimestamp  => Entry.DisplayTimestamp;
+        public string DisplayDuration  => Entry.DisplayDuration;
         public string StatusBadge      => Entry.Succeeded ? "✔" : "✘";
         public string ErrorMessage     => Entry.ErrorMessage;
 
+        public string DisplayOutputPath => string.IsNullOrEmpty(Entry.OutputPath)
+            ? string.Empty
+            : $"→ {Entry.OutputPath}";
+
         public Visibility ErrorVisibility =>
             string.IsNullOrEmpty(Entry.ErrorMessage) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility DurationVisibility =>
+            string.IsNullOrEmpty(DisplayDuration) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility OutputPathVisibility =>
+            string.IsNullOrEmpty(Entry.OutputPath) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility TexturesUploadedVisibility =>
+            Entry.UploadedTextures ? Visibility.Visible : Visibility.Collapsed;
+
+        public Visibility MeshesUploadedVisibility =>
+            Entry.UploadedMeshes ? Visibility.Visible : Visibility.Collapsed;
+
+        public Visibility BadgesVisibility =>
+            (Entry.UploadedTextures || Entry.UploadedMeshes) ? Visibility.Visible : Visibility.Collapsed;
 
         public System.Windows.Media.Brush StatusBackground =>
             Entry.Succeeded
