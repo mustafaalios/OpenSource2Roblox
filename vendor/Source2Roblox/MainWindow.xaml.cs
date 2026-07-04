@@ -14,6 +14,7 @@ namespace Source2Roblox
         private HomeView homeView;
         private SettingsView settingsView;
         private AboutView aboutView;
+        private HistoryView historyView;
 
         public MainWindow()
         {
@@ -25,6 +26,7 @@ namespace Source2Roblox
             homeView = new HomeView();
             settingsView = new SettingsView();
             aboutView = new AboutView();
+            historyView = new HistoryView();
 
             LanguageManager.SetCulture(settings.LanguageOverride);
 
@@ -62,6 +64,11 @@ namespace Source2Roblox
                 else if (tag == "settings")
                 {
                     RootFrame.Navigate(settingsView);
+                }
+                else if (tag == "history")
+                {
+                    historyView.Refresh();
+                    RootFrame.Navigate(historyView);
                 }
                 else if (tag == "about")
                 {
@@ -129,6 +136,7 @@ namespace Source2Roblox
                     string tag = navItem.Tag as string ?? string.Empty;
                     if (tag == "home")     navItem.Content = LanguageManager.Get("Title_Home");
                     else if (tag == "settings") navItem.Content = LanguageManager.Get("Title_Settings");
+                    else if (tag == "history")  navItem.Content = "History";
                 }
             }
 
@@ -144,6 +152,30 @@ namespace Source2Roblox
             homeView?.UpdateLanguage();
             settingsView?.UpdateLanguage();
             aboutView?.UpdateLanguage();
+            historyView?.UpdateLanguage();
+        }
+
+        public HomeView GetHomeView() => homeView;
+
+        public void NavigateTo(string tag)
+        {
+            if (tag == "home")
+            {
+                RootFrame.Navigate(homeView);
+            }
+            else if (tag == "history")
+            {
+                historyView.Refresh();
+                RootFrame.Navigate(historyView);
+            }
+            else if (tag == "settings")
+            {
+                RootFrame.Navigate(settingsView);
+            }
+            else if (tag == "about")
+            {
+                RootFrame.Navigate(aboutView);
+            }
         }
     }
 }

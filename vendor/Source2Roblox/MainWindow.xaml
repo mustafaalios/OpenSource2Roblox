@@ -48,6 +48,10 @@
                                           Icon="Settings24"
                                           TargetPageTag="settings"
                                           Tag="settings" />
+                    <ui:NavigationViewItem Content="History"
+                                          Icon="History24"
+                                          TargetPageTag="history"
+                                          Tag="history" />
                 </ui:NavigationView.MenuItems>
 
                 <ui:NavigationView.FooterMenuItems>

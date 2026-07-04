@@ -227,6 +227,17 @@ namespace Source2Roblox.Views
                 args.Add(settings.RobloxCreatorId);
             }
 
+            // ── Build the history entry before we run ──────────────────────────
+            var historyEntry = new ConversionHistoryEntry
+            {
+                Timestamp       = DateTime.UtcNow,
+                ConversionType  = activeMode,
+                GameDir         = gameDir,
+                GameName        = selectedGame?.Name ?? string.Empty,
+                UploadedTextures = settings.UploadAssets,
+                UploadedMeshes  = settings.UploadMeshes,
+            };
+
             if (activeMode == "map")
             {
                 string map = MapsComboBox.Text.Trim();
@@ -237,6 +248,7 @@ namespace Source2Roblox.Views
                 }
                 args.Add("-map");
                 args.Add(map);
+                historyEntry.Target = map;
             }
             else if (activeMode == "model")
             {
@@ -248,6 +260,7 @@ namespace Source2Roblox.Views
                 }
                 args.Add("-model");
                 args.Add(model);
+                historyEntry.Target = model;
             }
             else if (activeMode == "texture")
             {
@@ -259,6 +272,7 @@ namespace Source2Roblox.Views
                 }
                 args.Add("-vtf");
                 args.Add(tex);
+                historyEntry.Target = tex;
             }
             else if (activeMode == "advanced")
             {
@@ -269,6 +283,9 @@ namespace Source2Roblox.Views
                 if (!string.IsNullOrEmpty(map)) { args.Add("-map"); args.Add(map); }
                 if (!string.IsNullOrEmpty(model)) { args.Add("-model"); args.Add(model); }
                 if (!string.IsNullOrEmpty(tex)) { args.Add("-vtf"); args.Add(tex); }
+
+                historyEntry.Target = string.Join(", ",
+                    new[] { map, model, tex }.Where(s => !string.IsNullOrEmpty(s)));
             }
 
             RunButton.IsEnabled = false;
@@ -277,6 +294,7 @@ namespace Source2Roblox.Views
             PreviewCard.Visibility = Visibility.Collapsed;
             LauncherErrorText.Visibility = Visibility.Collapsed;
 
+            string runError = null;
             await Task.Run(() =>
             {
                 try
@@ -285,12 +303,38 @@ namespace Source2Roblox.Views
                 }
                 catch (Exception ex)
                 {
+                    runError = ex.Message;
                     Program.Emit("error", $"Fatal error: {ex.Message}", ex.ToString());
                 }
             });
 
+            // ── Record to history ──────────────────────────────────────────────
+            historyEntry.Succeeded     = runError == null;
+            historyEntry.ErrorMessage  = runError ?? string.Empty;
+            ConversionHistoryManager.Append(historyEntry);
+
             RunButton.IsEnabled = true;
             ProgressPanel.Visibility = Visibility.Collapsed;
+        }
+
+        // ── Load a historic entry back into the form (for Re-run) ──────────────
+        public void LoadFromHistory(ConversionHistoryEntry entry)
+        {
+            GameDirTextBox.Text = entry.GameDir;
+            SetActiveMode(entry.ConversionType);
+
+            switch (entry.ConversionType)
+            {
+                case "map":
+                    MapsComboBox.Text = entry.Target;
+                    break;
+                case "model":
+                    ModelTextBox.Text = entry.Target;
+                    break;
+                case "texture":
+                    TextureTextBox.Text = entry.Target;
+                    break;
+            }
         }
 
         private void OpenPreviewButton_Click(object sender, RoutedEventArgs e)
