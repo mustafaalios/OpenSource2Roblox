@@ -24,7 +24,6 @@ namespace Source2Roblox
             InitializeComponent();
             
             var settings = SettingsManager.Load();
-            ApplyVisualSettings(settings);
 
             homeView = new HomeView();
             settingsView = new SettingsView();
@@ -45,6 +44,14 @@ namespace Source2Roblox
 
             RootFrame.Navigate(homeView);
             UpdateLanguage();
+
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            var settings = SettingsManager.Load();
+            ApplyVisualSettings(settings);
         }
 
         private void RootNavigation_Loaded(object sender, RoutedEventArgs e)

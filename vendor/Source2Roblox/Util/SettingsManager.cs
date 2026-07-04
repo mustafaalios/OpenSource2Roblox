@@ -10,7 +10,7 @@ namespace Source2Roblox.Util
         public string GameDir { get; set; } = string.Empty;
         public string SelectedGameId { get; set; } = string.Empty;
         public string LanguageOverride { get; set; } = "";
-        public string Theme { get; set; } = "Light";
+        public string Theme { get; set; } = "System";
         public string Backdrop { get; set; } = "Mica";
         public bool UploadAssets { get; set; } = false;
         public bool UploadMeshes { get; set; } = false;
