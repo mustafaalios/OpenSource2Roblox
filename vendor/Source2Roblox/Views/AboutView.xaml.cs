@@ -6,7 +6,7 @@ namespace Source2Roblox.Views
 {
     public partial class AboutView : Page
     {
-        private const string AppVersion = "1.1.0";
+        private const string AppVersion = "1.1.1";
 
         private static readonly PersonEntry[] Maintainers =
         {
